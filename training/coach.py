@@ -92,7 +92,7 @@ class Coach:
 
 				# Validation related
 				val_loss_dict = None
-				if self.global_step % self.opts.val_interval == 0 or self.global_step == self.opts.max_steps:
+				if self.opts.val_interval>0 and (self.global_step % self.opts.val_interval == 0 or self.global_step == self.opts.max_steps):
 					val_loss_dict = self.validate()
 					if val_loss_dict and (self.best_val_loss is None or val_loss_dict['loss'] < self.best_val_loss):
 						self.best_val_loss = val_loss_dict['loss']
