@@ -76,6 +76,7 @@ class Coach:
 			for batch_idx, batch in enumerate(self.train_dataloader):
 				self.optimizer.zero_grad()
 				x, y = batch
+				logging.info('X: {}'.format(x.shape))
 				x, y = x.to(self.device).float(), y.to(self.device).float()
 				y_hat, latent = self.net.forward(x, return_latents=True)
 				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
