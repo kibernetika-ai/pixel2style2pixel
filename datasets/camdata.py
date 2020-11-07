@@ -114,6 +114,8 @@ class CamDataset(Dataset):
         img_in = img_in[y1:y2, x1:x2, ::-1]
         img_in = cv2.resize(img_in, (256, 256))
         img_in = img_as_float32(img_in)
+        img_out = np.transpose(img_out,[2,0,1])
+        img_in = np.transpose(img_in, [2, 0, 1])
         return img_in,img_out
 
     def __iter__(self):
