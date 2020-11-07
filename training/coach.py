@@ -211,6 +211,7 @@ class Coach:
 
 	def parse_and_log_images(self, id_logs, x, y, y_hat, title, subscript=None, display_count=2):
 		im_data = []
+		display_count = min(len(x),display_count)
 		for i in range(display_count):
 			cur_im_data = {
 				'input_face': common.log_input_image(x[i], self.opts),

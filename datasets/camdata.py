@@ -11,7 +11,6 @@ from skimage import img_as_float32
 LOG = logging.getLogger(__name__)
 
 
-
 class CamDataset(Dataset):
     """Face Landmarks dataset."""
 
@@ -65,7 +64,7 @@ class CamDataset(Dataset):
                     else:
                         d = np.abs(first[0:16] - l[0:16])
                         d = np.sum(d)
-                        if d > 2.5 or len(frames_out) > fps*4:
+                        if d > 2.5 or len(frames_out) > fps * 4:
                             if len(frames_out) > 2:
                                 _close(f, frames_out, boxes_out, lands_out)
                             lands_out = []
@@ -114,9 +113,9 @@ class CamDataset(Dataset):
         img_in = img_in[y1:y2, x1:x2, ::-1]
         img_in = cv2.resize(img_in, (256, 256))
         img_in = img_as_float32(img_in)
-        img_out = np.transpose(img_out,[2,0,1])
+        img_out = np.transpose(img_out, [2, 0, 1])
         img_in = np.transpose(img_in, [2, 0, 1])
-        return img_in,img_out
+        return img_in, img_out
 
     def __iter__(self):
         random.seed(time.time())
