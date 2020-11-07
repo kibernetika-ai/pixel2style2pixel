@@ -1,3 +1,4 @@
+import os
 dataset_paths = {
 	'celeba_train': '',
 	'celeba_test': '',
@@ -7,6 +8,13 @@ dataset_paths = {
 	'celeba_test_segmentation': '',
 	'ffhq': '',
 }
+
+def get_model_path(name):
+	v = model_paths.get(name,None)
+	if v is None:
+		return v
+	prefix = os.environ.get('PRETRAIN_PATH','./')
+	return os.path.join(prefix,v)
 
 model_paths = {
 	'stylegan_ffhq': 'pretrained_models/stylegan2-ffhq-config-f.pt',

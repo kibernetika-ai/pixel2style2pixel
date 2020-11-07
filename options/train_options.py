@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from configs.paths_config import model_paths
+from configs.paths_config import get_model_path
 
 
 class TrainOptions:
@@ -34,7 +34,7 @@ class TrainOptions:
 		self.parser.add_argument('--lpips_lambda_crop', default=0, type=float, help='LPIPS loss multiplier factor for inner image region')
 		self.parser.add_argument('--l2_lambda_crop', default=0, type=float, help='L2 loss multiplier factor for inner image region')
 
-		self.parser.add_argument('--stylegan_weights', default=model_paths['stylegan_ffhq'], type=str, help='Path to StyleGAN model weights')
+		self.parser.add_argument('--stylegan_weights', default=get_model_path('stylegan_ffhq'), type=str, help='Path to StyleGAN model weights')
 		self.parser.add_argument('--checkpoint_path', default=None, type=str, help='Path to pSp model checkpoint')
 
 		self.parser.add_argument('--max_steps', default=500000, type=int, help='Maximum number of training steps')

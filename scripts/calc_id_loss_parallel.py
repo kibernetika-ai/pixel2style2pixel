@@ -15,8 +15,8 @@ sys.path.append("..")
 
 from models.mtcnn.mtcnn import MTCNN
 from models.encoders.model_irse import IR_101
-from configs.paths_config import model_paths
-CIRCULAR_FACE_PATH = model_paths['circular_face']
+from configs.paths_config import get_model_path
+CIRCULAR_FACE_PATH = get_model_path('circular_face')
 
 
 def chunks(lst, n):

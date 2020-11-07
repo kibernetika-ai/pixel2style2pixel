@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from models.encoders import psp_encoders
 from models.stylegan2.model import Generator
-from configs.paths_config import model_paths
+from configs.paths_config import get_model_path
 
 
 def get_keys(d, name):
@@ -50,7 +50,7 @@ class pSp(nn.Module):
 			self.__load_latent_avg(ckpt)
 		else:
 			print('Loading encoders weights from irse50!')
-			encoder_ckpt = torch.load(model_paths['ir_se50'])
+			encoder_ckpt = torch.load(get_model_path('ir_se50'))
 			# if input to encoder is not an RGB image, do not load the input layer weights
 			if self.opts.label_nc != 0:
 				encoder_ckpt = {k: v for k, v in encoder_ckpt.items() if "input_layer" not in k}
