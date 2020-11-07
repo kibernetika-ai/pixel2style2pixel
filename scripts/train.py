@@ -5,6 +5,7 @@ import os
 import json
 import sys
 import pprint
+import logging
 
 sys.path.append(".")
 sys.path.append("..")
@@ -14,6 +15,11 @@ from training.coach import Coach
 
 
 def main():
+	logging.basicConfig(
+		level=logging.INFO,
+		format="%(asctime)s - %(message)s",
+		datefmt="%Y-%m-%d %H:%M:%S",
+	)
 	opts = TrainOptions().parse()
 	if os.path.exists(opts.exp_dir):
 		raise Exception('Oops... {} already exists'.format(opts.exp_dir))

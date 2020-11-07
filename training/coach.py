@@ -1,7 +1,7 @@
 import os
 import matplotlib
 import matplotlib.pyplot as plt
-
+import logging
 matplotlib.use('Agg')
 
 import torch
@@ -12,11 +12,10 @@ import torch.nn.functional as F
 
 from utils import common, train_utils
 from criteria import id_loss, w_norm
-from configs import data_configs
-from datasets.images_dataset import ImagesDataset
 from criteria.lpips.lpips import LPIPS
 from models.psp import pSp
 from training.ranger import Ranger
+from datasets.camdata import CamDataset
 
 
 class Coach:
@@ -24,8 +23,11 @@ class Coach:
 		self.opts = opts
 
 		self.global_step = 0
+		if torch.cuda.is_available():
+			self.device = 'cuda:0'  # TODO: Allow multiple GPU? currently using CUDA_VISIBLE_DEVICES
+		else:
+			self.device = 'cpu'
 
-		self.device = 'cuda:0'  # TODO: Allow multiple GPU? currently using CUDA_VISIBLE_DEVICES
 		self.opts.device = self.device
 
 		# Initialize network
@@ -103,7 +105,7 @@ class Coach:
 						self.checkpoint_me(loss_dict, is_best=False)
 
 				if self.global_step == self.opts.max_steps:
-					print('OMG, finished training!')
+					logging.info('OMG, finished training!')
 					break
 
 				self.global_step += 1
@@ -159,25 +161,10 @@ class Coach:
 		return optimizer
 
 	def configure_datasets(self):
-		if self.opts.dataset_type not in data_configs.DATASETS.keys():
-			Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
-		print('Loading dataset for {}'.format(self.opts.dataset_type))
-		dataset_args = data_configs.DATASETS[self.opts.dataset_type]
-		transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
-		train_dataset_celeba = ImagesDataset(source_root=dataset_args['train_source_root'],
-		                                     target_root=dataset_args['train_target_root'],
-		                                     source_transform=transforms_dict['transform_source'],
-		                                     target_transform=transforms_dict['transform_gt_train'],
-		                                     opts=self.opts)
-		test_dataset_celeba = ImagesDataset(source_root=dataset_args['test_source_root'],
-		                                    target_root=dataset_args['test_target_root'],
-		                                    source_transform=transforms_dict['transform_source'],
-		                                    target_transform=transforms_dict['transform_test'],
-		                                    opts=self.opts)
-		train_dataset = train_dataset_celeba
-		test_dataset = test_dataset_celeba
-		print("Number of training samples: {}".format(len(train_dataset)))
-		print("Number of test samples: {}".format(len(test_dataset)))
+		train_dataset = CamDataset(self.opts.dataset_type)
+		test_dataset = train_dataset
+		logging.info("Number of training samples: {}".format(len(train_dataset)))
+		logging.info("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset
 
 	def calc_loss(self, x, y, y_hat, latent):
@@ -217,9 +204,9 @@ class Coach:
 			self.logger.add_scalar('{}/{}'.format(prefix, key), value, self.global_step)
 
 	def print_metrics(self, metrics_dict, prefix):
-		print('Metrics for {}, step {}'.format(prefix, self.global_step))
+		logging.info('Metrics for {}, step {}'.format(prefix, self.global_step))
 		for key, value in metrics_dict.items():
-			print('\t{} = '.format(key), value)
+			logging.info('\t{} = {}'.format(key,value))
 
 	def parse_and_log_images(self, id_logs, x, y, y_hat, title, subscript=None, display_count=2):
 		im_data = []
