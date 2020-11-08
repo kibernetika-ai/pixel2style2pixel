@@ -27,8 +27,8 @@ class pSpL(nn.Module):
         # Define architecture
         self.latent_avg = None
         self.encoder1 = self.set_encoder()
-        self.encoder2 = self.set_encoder()
-        self.decoder = Generator(256, 512, 8)
+        self.encoder2 = psp_encoders.GradualStyleEncoder(10, 'ir_se', self.opts)
+        self.decoder = Generator(1024, 512, 8)
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
         # Load weights if needed
         self.load_weights()
