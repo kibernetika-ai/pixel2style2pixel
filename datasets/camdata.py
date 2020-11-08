@@ -6,7 +6,7 @@ import logging
 import cv2
 import os
 import time
-from skimage import img_as_float32
+import torchvision.transforms.functional as F
 
 LOG = logging.getLogger(__name__)
 
@@ -127,7 +127,8 @@ class CamDataset(Dataset):
         y2 = int(y2 * img_out.shape[0])
         img_out = img_out[y1:y2, x1:x2, ::-1]
         img_out = cv2.resize(img_out, (256, 256))
-        img_out = img_as_float32(img_out)
+        img_out = F.to_tensor(img_out)
+        img_out = F.normalize(img_out,[0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         land = lands[f2].copy()
         land[:, 0] = (land[:, 0] - x1) / (x2 - x1)
         land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
@@ -135,8 +136,8 @@ class CamDataset(Dataset):
         land *= 256
         land = land.astype(np.int32)
         land = vis_landmark_on_img(np.ones((self.width, self.width, 3), dtype=np.uint8) * 255, land)
-        land = land.astype(np.float32) / 255
-        land = np.transpose(land, [2, 0, 1])
+        land = F.to_tensor(land)
+        land = F.normalize(land, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
 
         img_in = cv2.imread(os.path.join(f, f'{frames[f1]}.jpg'))
         box = boxes[f1]
@@ -150,9 +151,8 @@ class CamDataset(Dataset):
         y2 = int(y2 * img_in.shape[0])
         img_in = img_in[y1:y2, x1:x2, ::-1]
         img_in = cv2.resize(img_in, (256, 256))
-        img_in = img_as_float32(img_in)
-        img_out = np.transpose(img_out, [2, 0, 1])
-        img_in = np.transpose(img_in, [2, 0, 1])
+        img_in = F.to_tensor(img_in)
+        img_in = F.normalize(img_in, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         return img_out,land, img_out
 
     def __iter__(self):
