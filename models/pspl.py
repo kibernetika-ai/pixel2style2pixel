@@ -26,19 +26,21 @@ class LatentKeys(nn.Module):
         layers.append(nn.InstanceNorm2d(conv_dim, affine=True))
         layers.append(nn.ReLU(inplace=True))
         curr_dim = conv_dim
-        for i in range(5):
+        for i in range(4):
             layers.append(nn.Conv2d(curr_dim, curr_dim * 2, kernel_size=4, stride=2, padding=1, bias=False))
             layers.append(nn.InstanceNorm2d(curr_dim * 2, affine=True))
             layers.append(nn.ReLU(inplace=True))
             curr_dim = curr_dim * 2
-        layers.append(nn.AvgPool2d(4,stride=2))
+
+        layers.append(nn.AvgPool2d(16,stride=1))
+
         self.main = nn.Sequential(*layers)
-        self.dense = nn.Linear(2048*3*3,512*18)
+        self.dense = nn.Linear(1024,512*18)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self,x):
         x = self.main(x)
-        x = x.view(-1,2048*3*3)
+        x = x.view(-1,1024)
         x = self.dense(x)
         return self.sigmoid(x)
 
