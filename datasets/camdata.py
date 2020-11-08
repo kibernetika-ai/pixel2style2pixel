@@ -111,7 +111,7 @@ class CamDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        kf = 2
+        kf = 3
         f, best_land, frames, boxes, lands = self.data[idx]
         f1 = best_land
         f2 = random.randint(1, len(frames) - 1)
