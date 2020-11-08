@@ -151,7 +151,8 @@ class Coach:
 				f.write('Step - {}, \n{}\n'.format(self.global_step, loss_dict))
 
 	def configure_optimizers(self):
-		params = list(self.net.encoder.parameters())
+		params = list(self.net.encoder1.parameters())
+		params += list(self.net.encoder2.parameters())
 		if self.opts.train_decoder:
 			params += list(self.net.decoder.parameters())
 		if self.opts.optim_name == 'adam':
