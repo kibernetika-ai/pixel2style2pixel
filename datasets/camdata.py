@@ -60,8 +60,8 @@ class CamDataset(Dataset):
 
         for src in glob.glob(os.path.join(root_dir, "*")):
             LOG.info("Parse: {}".format(src))
-            #if len(self.data)>5:
-            #    break
+            if len(self.data)>5:
+                break
             for f in glob.glob(os.path.join(src, "*")):
                 data_file = os.path.join(f, 'data.npz')
                 if not os.path.exists(data_file):
@@ -153,7 +153,7 @@ class CamDataset(Dataset):
         img_in = img_as_float32(img_in)
         img_out = np.transpose(img_out, [2, 0, 1])
         img_in = np.transpose(img_in, [2, 0, 1])
-        return img_in,land, img_out
+        return img_out,land, img_out
 
     def __iter__(self):
         random.seed(time.time())
