@@ -65,6 +65,7 @@ class Coach:
 		self.checkpoint_dir = os.path.join(opts.exp_dir, 'checkpoints')
 		os.makedirs(self.checkpoint_dir, exist_ok=True)
 		self.best_val_loss = None
+		self.last_images = []
 		if self.opts.save_interval is None:
 			self.opts.save_interval = self.opts.max_steps
 
@@ -236,6 +237,10 @@ class Coach:
 		self.log_images(title, im_data=im_data, subscript=subscript)
 
 	def log_images(self, name, im_data, subscript=None, log_latest=False):
+		if len(self.last_images)>10:
+			f = self.last_images.pop(0)
+			os.remove(f)
+
 		fig = common.vis_faces(im_data)
 		step = self.global_step
 		if log_latest:
@@ -246,6 +251,7 @@ class Coach:
 			path = os.path.join(self.logger.log_dir, name, '{:04d}.jpg'.format(step))
 		os.makedirs(os.path.dirname(path), exist_ok=True)
 		fig.savefig(path)
+		self.last_images.append(path)
 		plt.close(fig)
 
 	def __get_save_dict(self):
