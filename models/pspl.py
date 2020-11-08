@@ -36,13 +36,12 @@ class LatentKeys(nn.Module):
 
         self.main = nn.Sequential(*layers)
         self.dense = nn.Linear(1024,512*18)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self,x):
         x = self.main(x)
         x = x.view(-1,1024)
         x = self.dense(x)
-        return self.sigmoid(x)
+        return x
 
 
 class pSpL(nn.Module):
@@ -100,10 +99,10 @@ class pSpL(nn.Module):
     def forward(self, x, y, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
                 inject_latent=None, return_latents=False, alpha=None):
         codes_img = self.encoder(x)
-        #codes_land = self.latent_keys(y)
-        #codes_land = codes_land.view(-1,18,512)
+        codes_land = self.latent_keys(y)
+        codes_land = codes_land.view(-1,18,512)
         # normalize with respect to the center of an average face
-        codes = codes_img#*codes_land
+        codes = codes_img*codes_land
         images, result_latent = self.decoder([codes],
                                          input_is_latent=True,
                                          randomize_noise=randomize_noise,
