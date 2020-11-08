@@ -10,6 +10,32 @@ from skimage import img_as_float32
 
 LOG = logging.getLogger(__name__)
 
+def vis_landmark_on_img(img, shape, linewidth=2):
+    '''
+    Visualize landmark on images.
+    '''
+
+    def draw_curve(img, idx_list, color=(0, 255, 0), loop=False, lineWidth=linewidth):
+        if img is None:
+            return None
+        for i in idx_list:
+            img = cv2.line(img, (shape[i, 0], shape[i, 1]), (shape[i + 1, 0], shape[i + 1, 1]), color, lineWidth)
+        if (loop):
+            img = cv2.line(img, (shape[idx_list[0], 0], shape[idx_list[0], 1]),
+                     (shape[idx_list[-1] + 1, 0], shape[idx_list[-1] + 1, 1]), color, lineWidth)
+        return img
+
+
+    img = draw_curve(img,list(range(0, 16)), color=(255, 144, 25))  # jaw
+    img = draw_curve(img,list(range(17, 21)), color=(50, 205, 50))  # eye brow
+    img = draw_curve(img,list(range(22, 26)), color=(50, 205, 50))
+    img = draw_curve(img,list(range(27, 35)), color=(208, 224, 63))  # nose
+    img = draw_curve(img,list(range(36, 41)), loop=True, color=(71, 99, 255))  # eyes
+    img = draw_curve(img,list(range(42, 47)), loop=True, color=(71, 99, 255))
+    img = draw_curve(img,list(range(48, 59)), loop=True, color=(238, 130, 238))  # mouth
+    img = draw_curve(img,list(range(60, 67)), loop=True, color=(238, 130, 238))
+
+    return img
 
 class CamDataset(Dataset):
     """Face Landmarks dataset."""
@@ -18,7 +44,7 @@ class CamDataset(Dataset):
         self.root_dir = root_dir
         self.width = 256
         self.data = []
-        self.kf = 2
+        self.kf = 3
 
         def _close(f, frames_out, boxes_out, lands_out):
             lm = 1
@@ -100,6 +126,16 @@ class CamDataset(Dataset):
         img_out = img_out[y1:y2, x1:x2, ::-1]
         img_out = cv2.resize(img_out, (256, 256))
         img_out = img_as_float32(img_out)
+        land = lands[f2].copy()
+        land[:, 0] = (land[:, 0] - x1) / (x2 - x1)
+        land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
+        land = np.clip(land,0,1)
+        land *= 256
+        land = land.astype(np.int32)
+        land = vis_landmark_on_img(np.ones((self.width, self.width, 3), dtype=np.uint8) * 255, land)
+        land = land.astype(np.float32) / 255
+        land = np.transpose(land, [2, 0, 1])
+
         img_in = cv2.imread(os.path.join(f, f'{frames[f1]}.jpg'))
         box = boxes[f1]
         x1 = max(0, box[0] - (box[2] - box[0]) / kf)
@@ -115,7 +151,7 @@ class CamDataset(Dataset):
         img_in = img_as_float32(img_in)
         img_out = np.transpose(img_out, [2, 0, 1])
         img_in = np.transpose(img_in, [2, 0, 1])
-        return img_in, img_out
+        return img_in,land, img_out
 
     def __iter__(self):
         random.seed(time.time())
