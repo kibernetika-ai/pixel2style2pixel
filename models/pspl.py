@@ -25,6 +25,7 @@ class pSpL(nn.Module):
         super(pSpL, self).__init__()
         self.set_opts(opts)
         # Define architecture
+        self.latent_avg = None
         self.encoder1 = self.set_encoder()
         self.encoder2 = self.set_encoder()
         self.decoder = Generator(1024, 512, 8)
