@@ -35,7 +35,7 @@ class GradualStyleBlock(Module):
 class GradualStyleEncoder(Module):
     def __init__(self, num_layers, mode='ir', opts=None):
         super(GradualStyleEncoder, self).__init__()
-        assert num_layers in [50, 100, 152], 'num_layers should be 50,100, or 152'
+        assert num_layers in [1, 50, 100, 152], 'num_layers should be 50,100, or 152'
         assert mode in ['ir', 'ir_se'], 'mode should be ir or ir_se'
         blocks = get_blocks(num_layers)
         if mode == 'ir':
