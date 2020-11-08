@@ -152,7 +152,7 @@ class Coach:
 
 	def configure_optimizers(self):
 		params = list(self.net.encoder.parameters())
-		params += list(self.net.encoder2.parameters())
+		params += list(self.net.latent_keys.parameters())
 		if self.opts.train_decoder:
 			params += list(self.net.decoder.parameters())
 		if self.opts.optim_name == 'adam':

@@ -18,6 +18,30 @@ def get_keys(d, name):
     d_filt = {k[len(name) + 1:]: v for k, v in d.items() if k[:len(name)] == name}
     return d_filt
 
+class LatentKeys(nn.Module):
+    def __init__(self,conv_dim=64):
+        super(LatentKeys, self).__init__()
+        layers = []
+        layers.append(nn.Conv2d(3, conv_dim, kernel_size=7, stride=1, padding=3, bias=False))
+        layers.append(nn.InstanceNorm2d(conv_dim, affine=True))
+        layers.append(nn.ReLU(inplace=True))
+        curr_dim = conv_dim
+        for i in range(4):
+            layers.append(nn.Conv2d(curr_dim, curr_dim * 2, kernel_size=4, stride=2, padding=1, bias=False))
+            layers.append(nn.InstanceNorm2d(curr_dim * 2, affine=True))
+            layers.append(nn.ReLU(inplace=True))
+            curr_dim = curr_dim * 2
+
+        layers.append(nn.AvgPool2d(16,stride=16))
+        layers.append(nn.Conv2d(1024,512*18,kernel_size=1, stride=1, padding=0, bias=False))
+
+        self.main = nn.Sequential(*layers)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self,x):
+        x = self.main(x)
+        return self.sigmoid(x)
+
 
 class pSpL(nn.Module):
 
@@ -27,7 +51,7 @@ class pSpL(nn.Module):
         # Define architecture
         self.latent_avg = None
         self.encoder = self.set_encoder()
-        self.encoder2 = psp_encoders.GradualStyleEncoder(1, 'ir_se', self.opts)
+        self.latent_keys = LatentKeys()
         self.decoder = Generator(1024, 512, 8)
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
         # Load weights if needed
@@ -51,7 +75,7 @@ class pSpL(nn.Module):
             print('Loading pSp from checkpoint: {}'.format(self.opts.checkpoint_path))
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(get_keys(ckpt, 'encoder'), strict=True)
-            self.encoder2.load_state_dict(get_keys(ckpt, 'encoder2'), strict=True)
+            self.latent_keys.load_state_dict(get_keys(ckpt, 'latent_keys'), strict=True)
             self.decoder.load_state_dict(get_keys(ckpt, 'decoder'), strict=True)
             self.__load_latent_avg(ckpt)
         else:
@@ -74,9 +98,10 @@ class pSpL(nn.Module):
     def forward(self, x, y, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
                 inject_latent=None, return_latents=False, alpha=None):
         codes_img = self.encoder(x)
-        codes_land = self.encoder2(y)
+        codes_land = self.latent_keys(y)
+        codes_land = codes_land.view(-1,18,512)
         # normalize with respect to the center of an average face
-        codes = codes_img+codes_land
+        codes = codes_img*codes_land
         images, result_latent = self.decoder([codes],
                                          input_is_latent=True,
                                          randomize_noise=randomize_noise,
