@@ -153,7 +153,7 @@ class CamDataset(Dataset):
         img_in = cv2.resize(img_in, (256, 256))
         img_in = F.to_tensor(img_in)
         img_in = F.normalize(img_in, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-        return img_in,land, img_out
+        return img_in,land, img_in
 
     def __iter__(self):
         random.seed(time.time())

@@ -14,6 +14,7 @@ from utils import common, train_utils
 from criteria import id_loss, w_norm
 from criteria.lpips.lpips import LPIPS
 from models.pspl import pSpL
+from models.psp import pSp
 from training.ranger import Ranger
 from datasets.camdata import CamDataset
 
@@ -31,8 +32,8 @@ class Coach:
 		self.opts.device = self.device
 
 		# Initialize network
-		self.net = pSpL(self.opts).to(self.device)
-
+		#self.net = pSpL(self.opts).to(self.device)
+		self.net = pSp(self.opts).to(self.device)
 		# Initialize loss
 		if self.opts.lpips_lambda > 0:
 			self.lpips_loss = LPIPS(net_type='alex').to(self.device).eval()
@@ -78,7 +79,7 @@ class Coach:
 				self.optimizer.zero_grad()
 				x,l, y = batch
 				x, l,y = x.to(self.device).float(),l.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x,l, return_latents=True)
+				y_hat, latent = self.net.forward(x, return_latents=True)
 				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
 				loss.backward()
 				self.optimizer.step()
