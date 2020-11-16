@@ -120,15 +120,6 @@ class CamDataset(Dataset):
         x2 = min(1, box[2] + (box[2] - box[0]) / kf)
         y1 = max(0, box[1] - (box[3] - box[1]) / kf)
         y2 = min(1, box[3] + (box[3] - box[1]) / kf)
-        img_out = cv2.imread(os.path.join(f, f'{frames[f2]}.jpg'))
-        x1 = int(x1 * img_out.shape[1])
-        x2 = int(x2 * img_out.shape[1])
-        y1 = int(y1 * img_out.shape[0])
-        y2 = int(y2 * img_out.shape[0])
-        img_out = img_out[y1:y2, x1:x2, ::-1]
-        img_out = cv2.resize(img_out, (256, 256))
-        img_out = F.to_tensor(img_out)
-        img_out = F.normalize(img_out,[0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         land = lands[f2].copy()
         land[:, 0] = (land[:, 0] - x1) / (x2 - x1)
         land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
@@ -138,6 +129,16 @@ class CamDataset(Dataset):
         land = vis_landmark_on_img(np.ones((self.width, self.width, 3), dtype=np.uint8) * 255, land)
         land = F.to_tensor(land)
         land = F.normalize(land, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+
+        img_out = cv2.imread(os.path.join(f, f'{frames[f2]}.jpg'))
+        x1 = int(x1 * img_out.shape[1])
+        x2 = int(x2 * img_out.shape[1])
+        y1 = int(y1 * img_out.shape[0])
+        y2 = int(y2 * img_out.shape[0])
+        img_out = img_out[y1:y2, x1:x2, ::-1]
+        img_out = cv2.resize(img_out, (256, 256))
+        img_out = F.to_tensor(img_out)
+        img_out = F.normalize(img_out, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
 
         img_in = cv2.imread(os.path.join(f, f'{frames[f1]}.jpg'))
         box = boxes[f1]
