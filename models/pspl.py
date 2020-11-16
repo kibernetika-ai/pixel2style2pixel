@@ -52,7 +52,7 @@ class pSpL(nn.Module):
         # Define architecture
         self.latent_avg = None
         self.encoder = self.set_encoder()
-        self.latent_keys = LatentKeys()
+        #self.latent_keys = LatentKeys()
         self.decoder = Generator(1024, 512, 8)
         self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
         # Load weights if needed
@@ -76,7 +76,7 @@ class pSpL(nn.Module):
             print('Loading pSp from checkpoint: {}'.format(self.opts.checkpoint_path))
             ckpt = torch.load(self.opts.checkpoint_path, map_location='cpu')
             self.encoder.load_state_dict(get_keys(ckpt, 'encoder'), strict=True)
-            self.latent_keys.load_state_dict(get_keys(ckpt, 'latent_keys'), strict=True)
+            #self.latent_keys.load_state_dict(get_keys(ckpt, 'latent_keys'), strict=True)
             self.decoder.load_state_dict(get_keys(ckpt, 'decoder'), strict=True)
             self.__load_latent_avg(ckpt)
         else:
@@ -99,11 +99,11 @@ class pSpL(nn.Module):
     def forward(self, x, y, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
                 inject_latent=None, return_latents=False, alpha=None):
         codes_img = self.encoder(x)
-        codes_land = self.latent_keys(y)
-        codes_land = codes_land.view(-1,18,512)
+        #codes_land = self.latent_keys(y)
+        #codes_land = codes_land.view(-1,18,512)
         # normalize with respect to the center of an average face
-        codes = codes_img*codes_land
-        images, result_latent = self.decoder([codes],
+        #codes = codes_img*codes_land
+        images, result_latent = self.decoder([codes_img],
                                          input_is_latent=True,
                                          randomize_noise=randomize_noise,
                                          return_latents=return_latents)
