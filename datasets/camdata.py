@@ -60,8 +60,8 @@ class CamDataset(Dataset):
 
         for src in glob.glob(os.path.join(root_dir, "*")):
             LOG.info("Parse: {}".format(src))
-            #if len(self.data)>5:
-            #    break
+            if len(self.data)>5:
+                break
             for f in glob.glob(os.path.join(src, "*")):
                 data_file = os.path.join(f, 'data.npz')
                 if not os.path.exists(data_file):
