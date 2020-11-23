@@ -16,7 +16,7 @@ from criteria.lpips.lpips import LPIPS
 from models.pspl import pSpL
 from models.psp import pSp
 from training.ranger import Ranger
-from datasets.camdata import CamDataset
+from datasets.camdata import CamDataset,SingleDataset
 
 
 class Coach:
@@ -167,7 +167,8 @@ class Coach:
 		return optimizer
 
 	def configure_datasets(self):
-		train_dataset = CamDataset(self.opts.dataset_type)
+		#train_dataset = CamDataset(self.opts.dataset_type)
+		train_dataset = SingleDataset(self.opts.dataset_type)
 		test_dataset = train_dataset
 		logging.info("Number of training samples: {}".format(len(train_dataset)))
 		logging.info("Number of test samples: {}".format(len(test_dataset)))

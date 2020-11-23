@@ -155,3 +155,48 @@ class CamDataset(Dataset):
         img_in = F.to_tensor(img_in)
         img_in = F.normalize(img_in, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         return img_in,land, img_out
+
+class SingleDataset(Dataset):
+    """Face Landmarks dataset."""
+
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
+        self.width = 256
+        data_file = os.path.join(root_dir, 'data.npz')
+        npzfile = np.load(data_file)
+        lands = npzfile['landmarks3']
+        frames = npzfile['frames']
+        boxes = npzfile['boxes']
+        self.lands_out = []
+        self.frames_out = []
+        self.boxes_out = []
+        self.seq_out = []
+        for i, frame in enumerate(frames):
+            self.seq_out.append(i)
+            self.frames_out.append(frame)
+            self.lands_out.append(lands[i])
+            self.boxes_out.append(boxes[i])
+
+        LOG.info("Samples: {}".format(len(self.lands_out)))
+
+    def __len__(self):
+        return len(self.seq_out)
+
+    def __getitem__(self, idx):
+        def _get_land(f, lands, boxes):
+            land = lands[f].copy()
+            land = np.clip(land, 0, 1)
+            land *= self.width
+            land = land.astype(np.int32)
+            land = vis_landmark_on_img(np.ones((self.width, self.width, 3), dtype=np.uint8) * 255, land)
+            land = land.astype(np.float32) / 255
+            land = np.transpose(land, [2, 0, 1])
+            return land, (0, 0, 1, 1)
+        f = self.seq_out[idx]
+        land, box = _get_land(f, self.lands_out, self.boxes_out)
+        img_in = cv2.imread(os.path.join(f, f'{self.frames_out[f]}.jpg'))
+        img_in = img_in[:,:, ::-1]
+        img_in = cv2.resize(img_in, (256, 256))
+        img_in = F.to_tensor(img_in)
+        img_in = F.normalize(img_in, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        return img_in, land, img_in
