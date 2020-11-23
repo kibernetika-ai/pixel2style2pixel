@@ -183,19 +183,31 @@ class SingleDataset(Dataset):
         return len(self.seq_out)
 
     def __getitem__(self, idx):
+        kf = 3
         def _get_land(f, lands, boxes):
             land = lands[f].copy()
+            box = boxes[f]
+            x1 = max(0, box[0] - (box[2] - box[0]) / kf)
+            x2 = min(1, box[2] + (box[2] - box[0]) / kf)
+            y1 = max(0, box[1] - (box[3] - box[1]) / kf)
+            y2 = min(1, box[3] + (box[3] - box[1]) / kf)
+            land[:, 0] = (land[:, 0] - x1) / (x2 - x1)
+            land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
             land = np.clip(land, 0, 1)
             land *= self.width
             land = land.astype(np.int32)
             land = vis_landmark_on_img(np.ones((self.width, self.width, 3), dtype=np.uint8) * 255, land)
-            land = land.astype(np.float32) / 255
-            land = np.transpose(land, [2, 0, 1])
-            return land, (0, 0, 1, 1)
+            land = F.to_tensor(land)
+            land = F.normalize(land, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+            return land, (x1, y1, x2, y2)
         f = self.seq_out[idx]
         land, box = _get_land(f, self.lands_out, self.boxes_out)
         img_in = cv2.imread(os.path.join(self.root_dir, f'{self.frames_out[f]}.jpg'))
-        img_in = img_in[:,:, ::-1]
+        x1 = int(box[0] * img_in.shape[1])
+        x2 = int(box[2] * img_in.shape[1])
+        y1 = int(box[1] * img_in.shape[0])
+        y2 = int(box[3] * img_in.shape[0])
+        img_in = img_in[y1:y2,x1:x2, ::-1]
         img_in = cv2.resize(img_in, (256, 256))
         img_in = F.to_tensor(img_in)
         img_in = F.normalize(img_in, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
