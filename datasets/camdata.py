@@ -194,7 +194,7 @@ class SingleDataset(Dataset):
             return land, (0, 0, 1, 1)
         f = self.seq_out[idx]
         land, box = _get_land(f, self.lands_out, self.boxes_out)
-        img_in = cv2.imread(os.path.join(f, f'{self.frames_out[f]}.jpg'))
+        img_in = cv2.imread(os.path.join(self.root_dir, f'{self.frames_out[f]}.jpg'))
         img_in = img_in[:,:, ::-1]
         img_in = cv2.resize(img_in, (256, 256))
         img_in = F.to_tensor(img_in)
