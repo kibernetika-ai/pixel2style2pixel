@@ -88,7 +88,7 @@ def main():
     land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
     land[:,0:2] = np.clip(land[:,0:2], 0, 1)
 
-    def _make_frame(oa1,oa2,oa3):
+    def _make_frame(oa1,oa2,oa3,land):
         a1 = oa1 * math.pi / 180
         a2 = oa2 * math.pi / 180
         a3 = oa3 * math.pi / 180
@@ -104,31 +104,35 @@ def main():
         nl = F.normalize(nl, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         return nl
 
-    fps = 10
+    fps = 30
     fourcc = cv2.VideoWriter_fourcc(*"avc1")
     vout = cv2.VideoWriter(opts.res_video, fourcc, fps, (256,256))
 
-    for a1 in range(50):
+    for a1 in range(1):
+        if a1>-1:
+            break
         a1 -= 25.0
-        x = _make_frame(a1,0,0)
+        x = _make_frame(a1,0,0,land)
         with torch.no_grad():
             x = x.unsqueeze(0)
             x = x.to(device).float()
             y_hat, latent = net.forward(x, return_latents=True)
             y = tensor2im(y_hat[0])
         vout.write(y[:,:,::-1])
-    for a1 in range(70):
-        a1 -= 35.0
-        x = _make_frame(0,a1,0)
-        with torch.no_grad():
-            x = x.unsqueeze(0)
-            x = x.to(device).float()
-            y_hat, latent = net.forward(x, return_latents=True)
-            y = tensor2im(y_hat[0])
-        vout.write(y[:,:,::-1])
-    for a1 in range(50):
-        a1 -= 25.0
-        x = _make_frame(0,0,a1)
+    
+    for i in range(len(lands)):
+        logging.info('{} of {}'.format(i,len(lands)))
+        land = lands[i].copy()
+        box = boxes[i]
+        kf = 3
+        x1 = max(0, box[0] - (box[2] - box[0]) / kf)
+        x2 = min(1, box[2] + (box[2] - box[0]) / kf)
+        y1 = max(0, box[1] - (box[3] - box[1]) / kf)
+        y2 = min(1, box[3] + (box[3] - box[1]) / kf)
+        land[:, 0] = (land[:, 0] - x1) / (x2 - x1)
+        land[:, 1] = (land[:, 1] - y1) / (y2 - y1)
+        land[:,0:2] = np.clip(land[:,0:2], 0, 1)
+        x = _make_frame(0,0,0,land)
         with torch.no_grad():
             x = x.unsqueeze(0)
             x = x.to(device).float()
