@@ -94,7 +94,8 @@ def main():
         a3 = oa3 * math.pi / 180
 
         m = euler.euler2mat(a1, a2, a3)
-        nl = np.dot(m, land.T).T
+        nl = land.copy()
+        nl = np.dot(m, nl.T).T
         nl[:, 0:2] = np.clip(nl[:, 0:2], 0, 1)
         nl *= 256
         nl = nl.astype(np.int32)
@@ -103,7 +104,7 @@ def main():
         nl = F.normalize(nl, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         return nl
 
-    fps = 1/2
+    fps = 1/10
     fourcc = cv2.VideoWriter_fourcc(*"avc1")
     vout = cv2.VideoWriter(opts.res_video, fourcc, fps, (256,256))
 
@@ -115,7 +116,24 @@ def main():
             x = x.to(device).float()
             y_hat, latent = net.forward(x, return_latents=True)
             y = tensor2im(y_hat[0])
-        logging.info("Out shape: {}".format(y.shape))
+        vout.write(y[:,:,::-1])
+    for a1 in range(50):
+        a1 -= 25.0
+        x = _make_frame(0,a1,0)
+        with torch.no_grad():
+            x = x.unsqueeze(0)
+            x = x.to(device).float()
+            y_hat, latent = net.forward(x, return_latents=True)
+            y = tensor2im(y_hat[0])
+        vout.write(y[:,:,::-1])
+    for a1 in range(50):
+        a1 -= 25.0
+        x = _make_frame(0,0,a1)
+        with torch.no_grad():
+            x = x.unsqueeze(0)
+            x = x.to(device).float()
+            y_hat, latent = net.forward(x, return_latents=True)
+            y = tensor2im(y_hat[0])
         vout.write(y[:,:,::-1])
     vout.release()
 
