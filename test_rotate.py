@@ -110,8 +110,8 @@ def main():
     for a1 in range(50):
         a1 -= 25.0
         x = _make_frame(a1,0,0)
-        x = np.expand_dims(x,axis=0)
         with torch.no_grad():
+            x = x.unsqueeze(0)
             x = x.to(device).float()
             y_hat, latent = net.forward(x, return_latents=True)
             y = tensor2im(y_hat[0])
