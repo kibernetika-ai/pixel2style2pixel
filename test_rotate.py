@@ -104,7 +104,7 @@ def main():
         nl = F.normalize(nl, [0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         return nl
 
-    fps = 1/10
+    fps = 10
     fourcc = cv2.VideoWriter_fourcc(*"avc1")
     vout = cv2.VideoWriter(opts.res_video, fourcc, fps, (256,256))
 
@@ -117,8 +117,8 @@ def main():
             y_hat, latent = net.forward(x, return_latents=True)
             y = tensor2im(y_hat[0])
         vout.write(y[:,:,::-1])
-    for a1 in range(50):
-        a1 -= 25.0
+    for a1 in range(70):
+        a1 -= 35.0
         x = _make_frame(0,a1,0)
         with torch.no_grad():
             x = x.unsqueeze(0)
