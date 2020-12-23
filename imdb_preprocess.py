@@ -110,11 +110,16 @@ def main():
             print_fun(f'Progress {i / len(image_paths) * 100:.2f} %.')
             print_fun(f'Processed {processed} images, looked: {i}.')
 
-        with open(path, 'rb') as f:
-            raw_img = f.read()
-        frame = cv2.imdecode(np.frombuffer(raw_img, np.uint8), cv2.IMREAD_COLOR)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        detected_faces = fa3d.face_detector.detect_from_image(frame_rgb)
+        try:
+            with open(path, 'rb') as f:
+                raw_img = f.read()
+            frame = cv2.imdecode(np.frombuffer(raw_img, np.uint8), cv2.IMREAD_COLOR)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            detected_faces = fa3d.face_detector.detect_from_image(frame_rgb)
+        except Exception as e:
+            print_fun(f'ERROR: {path}, {e}; Skip')
+            continue
+
         if len(detected_faces) != 1:
             continue
         box = detected_faces[0]
