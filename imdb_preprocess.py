@@ -113,7 +113,8 @@ def main():
         with open(path, 'rb') as f:
             raw_img = f.read()
         frame = cv2.imdecode(np.frombuffer(raw_img, np.uint8), cv2.IMREAD_COLOR)
-        detected_faces = fa3d.face_detector.detect_from_image(frame[:, :, ::-1])
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        detected_faces = fa3d.face_detector.detect_from_image(frame_rgb)
         if len(detected_faces) != 1:
             continue
         box = detected_faces[0]
