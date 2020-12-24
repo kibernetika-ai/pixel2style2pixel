@@ -13,6 +13,7 @@ import torch.nn.functional as F
 from utils import common, train_utils
 from criteria import id_loss, w_norm
 from configs import data_configs
+from datasets import imdb_dataset
 from datasets.images_dataset import ImagesDataset
 from criteria.lpips.lpips import LPIPS
 from models.psp import pSp
@@ -25,7 +26,8 @@ class Coach:
 
 		self.global_step = 0
 
-		self.device = 'cuda:0'  # TODO: Allow multiple GPU? currently using CUDA_VISIBLE_DEVICES
+		# TODO: Allow multiple GPU? currently using CUDA_VISIBLE_DEVICES
+		self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 		self.opts.device = self.device
 
 		# Initialize network
@@ -45,6 +47,7 @@ class Coach:
 
 		# Initialize dataset
 		self.train_dataset, self.test_dataset = self.configure_datasets()
+		__import__('ipdb').set_trace()
 		self.train_dataloader = DataLoader(self.train_dataset,
 										   batch_size=self.opts.batch_size,
 										   shuffle=True,
@@ -163,20 +166,20 @@ class Coach:
 		# if self.opts.dataset_type not in data_configs.DATASETS.keys():
 		# 	Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
 		print('Loading dataset for {}'.format(self.opts.dataset_type))
-		dataset_args = data_configs.DATASETS[self.opts.dataset_type]
-		transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
-		train_dataset_celeba = ImagesDataset(source_root=dataset_args['train_source_root'],
-		                                     target_root=dataset_args['train_target_root'],
-		                                     source_transform=transforms_dict['transform_source'],
-		                                     target_transform=transforms_dict['transform_gt_train'],
-		                                     opts=self.opts)
-		test_dataset_celeba = ImagesDataset(source_root=dataset_args['test_source_root'],
-		                                    target_root=dataset_args['test_target_root'],
-		                                    source_transform=transforms_dict['transform_source'],
-		                                    target_transform=transforms_dict['transform_test'],
-		                                    opts=self.opts)
-		train_dataset = train_dataset_celeba
-		test_dataset = test_dataset_celeba
+		# dataset_args = data_configs.DATASETS[self.opts.dataset_type]
+		# transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
+		# train_dataset_celeba = ImagesDataset(source_root=dataset_args['train_source_root'],
+		#                                      target_root=dataset_args['train_target_root'],
+		#                                      source_transform=transforms_dict['transform_source'],
+		#                                      target_transform=transforms_dict['transform_gt_train'],
+		#                                      opts=self.opts)
+		# test_dataset_celeba = ImagesDataset(source_root=dataset_args['test_source_root'],
+		#                                     target_root=dataset_args['test_target_root'],
+		#                                     source_transform=transforms_dict['transform_source'],
+		#                                     target_transform=transforms_dict['transform_test'],
+		#                                     opts=self.opts)
+		train_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.0, 0.9))
+		test_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.9, 1.0))
 		print("Number of training samples: {}".format(len(train_dataset)))
 		print("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset
