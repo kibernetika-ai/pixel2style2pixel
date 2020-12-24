@@ -160,8 +160,8 @@ class Coach:
 		return optimizer
 
 	def configure_datasets(self):
-		if self.opts.dataset_type not in data_configs.DATASETS.keys():
-			Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
+		# if self.opts.dataset_type not in data_configs.DATASETS.keys():
+		# 	Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
 		print('Loading dataset for {}'.format(self.opts.dataset_type))
 		dataset_args = data_configs.DATASETS[self.opts.dataset_type]
 		transforms_dict = dataset_args['transforms'](self.opts).get_transforms()

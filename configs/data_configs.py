@@ -3,6 +3,7 @@ from configs.paths_config import dataset_paths
 
 
 DATASETS = {
+	'imdb_front': {},
 	'ffhq_encode': {
 		'transforms': transforms_config.EncodeTransforms,
 		'train_source_root': dataset_paths['ffhq'],
