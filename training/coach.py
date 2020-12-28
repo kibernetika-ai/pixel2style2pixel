@@ -52,7 +52,7 @@ class Coach:
         # Initialize loss
         if self.opts.lpips_lambda > 0:
             self.lpips_loss = LPIPS(net_type='alex').to(self.device).eval()
-        if self.opts.id_lambda > 0:
+        if self.opts.id_lambda != 0:
             self.id_loss = id_loss.IDLoss(weights=opts.facenet_path).to(self.device).eval()
         if self.opts.w_norm_lambda > 0:
             self.w_norm_loss = w_norm.WNormLoss(start_from_latent_avg=self.opts.start_from_latent_avg)
