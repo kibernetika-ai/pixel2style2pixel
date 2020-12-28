@@ -13,17 +13,18 @@ class IDLoss(nn.Module):
         self.face_pool = torch.nn.AdaptiveAvgPool2d((112, 112))
         self.facenet.eval()
 
-    def extract_feats(self, x):
-        x = x[:, :, 35:223, 32:220]  # Crop interesting region
+    def extract_feats(self, x, face=True):
+        if face:
+            x = x[:, :, 35:223, 32:220]  # Crop interesting region
         x = self.face_pool(x)
         x_feats = self.facenet(x)
         return x_feats
 
-    def forward(self, y_hat, y, x):
+    def forward(self, y_hat, y, x, face=True):
         n_samples = x.shape[0]
-        x_feats = self.extract_feats(x)
-        y_feats = self.extract_feats(y)  # Otherwise use the feature from there
-        y_hat_feats = self.extract_feats(y_hat)
+        x_feats = self.extract_feats(x, face=face)
+        y_feats = self.extract_feats(y, face=face)  # Otherwise use the feature from there
+        y_hat_feats = self.extract_feats(y_hat, face=face)
         y_feats = y_feats.detach()
         loss = 0
         sim_improvement = 0

@@ -240,7 +240,7 @@ class Coach:
                     loss_lpips = self.lpips_loss(fhead_y, fhead_x)
                     lpips_loss += loss_lpips * self.opts.lpips_lambda
                 if self.opts.id_lambda_fh != 0:
-                    loss_id, sim_improvement, id_logs = self.id_loss(fhead_y, fhead_x, fhead_x)
+                    loss_id, sim_improvement, id_logs = self.id_loss(fhead_y, fhead_x, fhead_x, face=False)
                     loss_dict['loss_id_fh'] = float(loss_id)
                     # loss_dict['id_improve'] = float(sim_improvement)
                     id_loss += loss_id * self.opts.id_lambda_fh
@@ -254,7 +254,7 @@ class Coach:
             loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y, x)
             loss_dict['loss_id'] = float(loss_id)
             loss_dict['id_improve'] = float(sim_improvement)
-            loss = loss_id * self.opts.id_lambda
+            loss += loss_id * self.opts.id_lambda
         if self.opts.l2_lambda > 0:
             loss_l2 = F.mse_loss(y_hat, y)
             loss_dict['loss_l2'] = float(loss_l2)
