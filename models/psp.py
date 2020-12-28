@@ -29,6 +29,8 @@ class pSp(nn.Module):
 		self.face_pool = torch.nn.AdaptiveAvgPool2d((256, 256))
 		# Load weights if needed
 		self.load_weights()
+		# if opts.decoder_train_disable:
+		# 	self.decoder = self.decoder.requires_grad_(False)
 
 	def set_encoder(self):
 		if self.opts.encoder_type == 'GradualStyleEncoder':

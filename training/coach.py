@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 matplotlib.use('Agg')
 
+import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -20,6 +21,20 @@ from models.psp import pSp
 from training.ranger import Ranger
 
 
+class Proc(nn.Module):
+	def __init__(self):
+		super(Proc, self).__init__()
+		self.model = nn.Sequential(
+			nn.Linear(512, 1024),
+			nn.Linear(1024, 512),
+		)
+
+	def forward(self, x):  # B, 18, 512
+		batched = x.view(-1, x.shape[2])  # Bx18, 512
+		batched = self.model(batched)  # Bx18, 512
+		return batched.view(*x.shape)
+
+
 class Coach:
 	def __init__(self, opts):
 		self.opts = opts
@@ -32,6 +47,7 @@ class Coach:
 
 		# Initialize network
 		self.net = pSp(self.opts).to(self.device)
+		self.proc_latent = Proc()
 
 		# Initialize loss
 		if self.opts.lpips_lambda > 0:
@@ -47,17 +63,18 @@ class Coach:
 
 		# Initialize dataset
 		self.train_dataset, self.test_dataset = self.configure_datasets()
-		__import__('ipdb').set_trace()
-		self.train_dataloader = DataLoader(self.train_dataset,
-										   batch_size=self.opts.batch_size,
-										   shuffle=True,
-										   num_workers=int(self.opts.workers),
-										   drop_last=True)
-		self.test_dataloader = DataLoader(self.test_dataset,
-										  batch_size=self.opts.test_batch_size,
-										  shuffle=False,
-										  num_workers=int(self.opts.test_workers),
-										  drop_last=True)
+		self.train_dataloader = DataLoader(
+			self.train_dataset,
+			batch_size=self.opts.batch_size,
+			shuffle=True,
+			num_workers=int(self.opts.workers),
+			drop_last=True)
+		self.test_dataloader = DataLoader(
+			self.test_dataset,
+			batch_size=self.opts.test_batch_size,
+			shuffle=False,
+			num_workers=int(self.opts.test_workers),
+			drop_last=True)
 
 		# Initialize logger
 		log_dir = os.path.join(opts.exp_dir, 'logs')
@@ -77,10 +94,30 @@ class Coach:
 		while self.global_step < self.opts.max_steps:
 			for batch_idx, batch in enumerate(self.train_dataloader):
 				self.optimizer.zero_grad()
-				x, y = batch
+				x, y, forehead_box = batch
 				x, y = x.to(self.device).float(), y.to(self.device).float()
-				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+
+				# y_hat, latent = self.net.forward(x, return_latents=True)
+
+				vec_to_inject = np.random.randn(1, 512).astype('float32')
+				_, latent_to_inject = self.net.forward(
+					torch.from_numpy(vec_to_inject).to(self.device),
+					input_code=True,
+					return_latents=True
+				)
+
+				# latent_to_inject = self.proc_latent(latent_to_inject)
+
+				y_hat, latent = self.net.forward(
+					x,
+					latent_mask=np.random.choice(np.arange(18), size=2),
+					inject_latent=latent_to_inject,
+					return_latents=True
+					# alpha=opts.mix_alpha,
+					# resize=opts.resize_outputs
+				)
+
+				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent, forehead_box)
 				loss.backward()
 				self.optimizer.step()
 
@@ -94,7 +131,7 @@ class Coach:
 
 				# Validation related
 				val_loss_dict = None
-				if self.global_step % self.opts.val_interval == 0 or self.global_step == self.opts.max_steps:
+				if self.global_step > 0 and self.global_step % self.opts.val_interval == 0 or self.global_step == self.opts.max_steps:
 					val_loss_dict = self.validate()
 					if val_loss_dict and (self.best_val_loss is None or val_loss_dict['loss'] < self.best_val_loss):
 						self.best_val_loss = val_loss_dict['loss']
@@ -116,18 +153,20 @@ class Coach:
 		self.net.eval()
 		agg_loss_dict = []
 		for batch_idx, batch in enumerate(self.test_dataloader):
-			x, y = batch
+			x, y, fboxes = batch
 
 			with torch.no_grad():
 				x, y = x.to(self.device).float(), y.to(self.device).float()
 				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent, fboxes)
 			agg_loss_dict.append(cur_loss_dict)
 
 			# Logging related
-			self.parse_and_log_images(id_logs, x, y, y_hat,
-									  title='images/test/faces',
-									  subscript='{:04d}'.format(batch_idx))
+			self.parse_and_log_images(
+				id_logs, x, y, y_hat,
+				title='images/test/faces',
+				subscript='{:04d}'.format(batch_idx)
+			)
 
 			# For first step just do sanity test on small amount of data
 			if self.global_step == 0 and batch_idx >= 4:
@@ -184,10 +223,20 @@ class Coach:
 		print("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset
 
-	def calc_loss(self, x, y, y_hat, latent):
+	def calc_loss(self, x, y, y_hat, latent, fboxes):
 		loss_dict = {}
 		loss = 0.0
 		id_logs = None
+		forehead_lambda = 1.0
+
+		if forehead_lambda > 0:
+			f_loss = 0
+			for i, fbox in enumerate(fboxes):
+				fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
+				fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
+				f_loss += F.mse_loss(fhead_y, fhead_x)
+			loss += f_loss
+
 		if self.opts.id_lambda > 0:
 			loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y, x)
 			loss_dict['loss_id'] = float(loss_id)
