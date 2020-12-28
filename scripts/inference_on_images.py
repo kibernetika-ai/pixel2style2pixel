@@ -59,15 +59,16 @@ def main():
         result_batch = net(inputs)
         result = tensor2im(result_batch[0])
 
+        merged_result = np.hstack((resized[:, :, ::-1], np.array(result)[:, :, ::-1]))
         if args.show:
-            cv2.imshow('Res', np.hstack((resized[:, :, ::-1], np.array(result)[:, :, ::-1])))
+            cv2.imshow('Res', merged_result)
             cv2.waitKey(0)
 
         if args.output_dir:
             if not os.path.exists(args.output_dir):
                 os.makedirs(args.output_dir)
             save_path = os.path.join(args.output_dir, os.path.basename(path))
-            cv2.imwrite(save_path, np.array(result)[:, :, ::-1])
+            cv2.imwrite(save_path, merged_result)
 
 
 if __name__ == '__main__':
