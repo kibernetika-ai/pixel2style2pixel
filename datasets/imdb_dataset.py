@@ -92,6 +92,12 @@ class ImdbDataset(Dataset):
         # dest_path = '/'.join(to_path.split('/')[-2:])
         landmark = self.denorm_lmarks(self.landmarks[src_path], from_im)
         fbox = self.forehead_coords(landmark).astype(int)
+
+        if fbox[3] - fbox[1] < 32:
+            # print(f'Fbox too small: {fbox}')
+            new_idx = np.random.randint(0, len(self))
+            return self[new_idx]
+
         forehead = from_im[fbox[1]:fbox[3], fbox[0]:fbox[2]]
         # landmark_dst = self.denorm_lmarks(self.landmarks[dest_path], to_im)
         # for p in landmark_dst:

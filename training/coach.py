@@ -187,7 +187,8 @@ class Coach:
         torch.save(save_dict, checkpoint_path)
         with open(os.path.join(self.checkpoint_dir, 'timestamp.txt'), 'a') as f:
             if is_best:
-                f.write('**Best**: Step - {}, Loss - {:.3f} \n{}\n'.format(self.global_step, self.best_val_loss, loss_dict))
+                f.write(
+                    '**Best**: Step - {}, Loss - {:.3f} \n{}\n'.format(self.global_step, self.best_val_loss, loss_dict))
             else:
                 f.write('Step - {}, \n{}\n'.format(self.global_step, loss_dict))
 
@@ -303,7 +304,7 @@ class Coach:
         self.log_images(title, im_data=im_data, subscript=subscript)
 
     def log_images(self, name, im_data, subscript=None, log_latest=False):
-        if len(self.last_images)>10:
+        if len(self.last_images) > 10:
             f = self.last_images.pop(0)
             os.remove(f)
 
