@@ -1,15 +1,20 @@
 import argparse
 import glob
 import math
+import multiprocessing as mp
 import os
 import pickle
 import sys
+import time
+import queue
+import threading
 
 import cv2
 import face_alignment
 import numpy as np
 import torch
 
+from scripts import align_all_parallel as align
 from transform3d import euler
 
 
@@ -105,6 +110,7 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 
+    t = time.time()
     for i, path in enumerate(image_paths):
         if i % 100 == 0:
             print_fun(f'Progress {i / len(image_paths) * 100:.2f} %.')
@@ -128,10 +134,19 @@ def main():
         y1 = box[1] / frame.shape[0]
         y2 = box[3] / frame.shape[0]
         l3d = fa3d.get_landmarks(frame, detected_faces=[box])
+        if l3d is None or len(l3d) < 1:
+            continue
+        l3d = l3d[0]
+
+        aligned = align.align_face(None, None, frame_rgb, l3d[:, :2])
+        aligned = np.array(aligned)
+
+        l3d = fa3d.get_landmarks(aligned)
         scale = (box[2] - box[0] + box[3] - box[1]) / 195
         if l3d is None or len(l3d) < 1:
             continue
         l3d = l3d[0]
+
         landmark_3d = l3d[:, :].astype(np.float32)
         landmark_3d[:, 0] = (landmark_3d[:, 0]) / frame.shape[1]
         landmark_3d[:, 1] = (landmark_3d[:, 1]) / frame.shape[0]
@@ -154,8 +169,10 @@ def main():
         save_path = os.path.join(args.output_dir, dirname, basename)
         if not os.path.exists(os.path.join(args.output_dir, dirname)):
             os.makedirs(os.path.join(args.output_dir, dirname))
-        with open(save_path, 'wb') as f:
-            f.write(raw_img)
+
+        cv2.imwrite(save_path, aligned[:, :, ::-1])
+        # with open(save_path, 'wb') as f:
+        #     f.write(raw_img)
 
         landmarks[f'{dirname}/{basename}'] = landmark_3d
         boxes[f'{dirname}/{basename}'] = np.array([x1, y1, x2, y2])
@@ -170,6 +187,7 @@ def main():
         pickle.dump(boxes, f)
 
     print_fun(f'Processed {processed} images, looked: {i}')
+    print_fun(f'Took {time.time() - t:.3f} seconds.')
 
 
 def print_fun(s):

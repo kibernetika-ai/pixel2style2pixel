@@ -49,13 +49,16 @@ def get_landmark(filepath, predictor):
 	return lm
 
 
-def align_face(filepath, predictor):
+def align_face(filepath, predictor, img=None, landmarks=None):
 	"""
 	:param filepath: str
 	:return: PIL Image
 	"""
 
-	lm = get_landmark(filepath, predictor)
+	if landmarks is not None:
+		lm = landmarks
+	else:
+		lm = get_landmark(filepath, predictor)
 
 	lm_chin = lm[0: 17]  # left-right
 	lm_eyebrow_left = lm[17: 22]  # left-right
@@ -87,7 +90,10 @@ def align_face(filepath, predictor):
 	qsize = np.hypot(*x) * 2
 
 	# read image
-	img = PIL.Image.open(filepath)
+	if img is None:
+		img = PIL.Image.open(filepath)
+	else:
+		img = PIL.Image.fromarray(img)
 
 	output_size = 256
 	transform_size = 256
