@@ -231,11 +231,24 @@ class Coach:
 
 		if forehead_lambda > 0:
 			f_loss = 0
+			lpips_loss = 0
+			id_loss = 0
 			for i, fbox in enumerate(fboxes):
 				fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
 				fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
+				if self.opts.lpips_lambda > 0:
+					loss_lpips = self.lpips_loss(fhead_y, fhead_x)
+					lpips_loss += loss_lpips * self.opts.lpips_lambda
+				if self.opts.id_lambda > 0:
+					loss_id, sim_improvement, id_logs = self.id_loss(fhead_y, fhead_x, fhead_x)
+					loss_dict['loss_id'] = float(loss_id)
+					# loss_dict['id_improve'] = float(sim_improvement)
+					id_loss += loss_id * self.opts.id_lambda_fh
 				f_loss += F.mse_loss(fhead_y, fhead_x)
+				loss_dict['loss_lpips'] = float(lpips_loss)
 			loss += f_loss
+			loss += lpips_loss
+			loss += id_loss
 
 		if self.opts.id_lambda > 0:
 			loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y, x)
@@ -246,18 +259,18 @@ class Coach:
 			loss_l2 = F.mse_loss(y_hat, y)
 			loss_dict['loss_l2'] = float(loss_l2)
 			loss += loss_l2 * self.opts.l2_lambda
-		if self.opts.lpips_lambda > 0:
-			loss_lpips = self.lpips_loss(y_hat, y)
-			loss_dict['loss_lpips'] = float(loss_lpips)
-			loss += loss_lpips * self.opts.lpips_lambda
-		if self.opts.lpips_lambda_crop > 0:
-			loss_lpips_crop = self.lpips_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
-			loss_dict['loss_lpips_crop'] = float(loss_lpips_crop)
-			loss += loss_lpips_crop * self.opts.lpips_lambda_crop
-		if self.opts.l2_lambda_crop > 0:
-			loss_l2_crop = F.mse_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
-			loss_dict['loss_l2_crop'] = float(loss_l2_crop)
-			loss += loss_l2_crop * self.opts.l2_lambda_crop
+		# if self.opts.lpips_lambda > 0:
+		# 	loss_lpips = self.lpips_loss(y_hat, y)
+		# 	loss_dict['loss_lpips'] = float(loss_lpips)
+		# 	loss += loss_lpips * self.opts.lpips_lambda
+		# if self.opts.lpips_lambda_crop > 0:
+		# 	loss_lpips_crop = self.lpips_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
+		# 	loss_dict['loss_lpips_crop'] = float(loss_lpips_crop)
+		# 	loss += loss_lpips_crop * self.opts.lpips_lambda_crop
+		# if self.opts.l2_lambda_crop > 0:
+		# 	loss_l2_crop = F.mse_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
+		# 	loss_dict['loss_l2_crop'] = float(loss_l2_crop)
+		# 	loss += loss_l2_crop * self.opts.l2_lambda_crop
 		if self.opts.w_norm_lambda > 0:
 			loss_w_norm = self.w_norm_loss(latent, self.net.latent_avg)
 			loss_dict['loss_w_norm'] = float(loss_w_norm)
