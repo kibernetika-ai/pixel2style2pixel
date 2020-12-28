@@ -234,18 +234,19 @@ class Coach:
             lpips_loss = 0
             id_loss = 0
             for i, fbox in enumerate(fboxes):
-                fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
-                fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]]
+                fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
+                fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
                 if self.opts.lpips_lambda > 0:
                     loss_lpips = self.lpips_loss(fhead_y, fhead_x)
                     lpips_loss += loss_lpips * self.opts.lpips_lambda
                 if self.opts.id_lambda_fh != 0:
                     loss_id, sim_improvement, id_logs = self.id_loss(fhead_y, fhead_x, fhead_x, face=False)
-                    loss_dict['loss_id_fh'] = float(loss_id)
+
                     # loss_dict['id_improve'] = float(sim_improvement)
                     id_loss += loss_id * self.opts.id_lambda_fh
                 f_loss += F.mse_loss(fhead_y, fhead_x)
-                loss_dict['loss_lpips'] = float(lpips_loss)
+            loss_dict['loss_lpips'] = float(lpips_loss)
+            loss_dict['loss_id_fh'] = float(id_loss)
             loss += f_loss
             loss += lpips_loss
             loss += id_loss
