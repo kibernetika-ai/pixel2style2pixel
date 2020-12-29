@@ -153,6 +153,8 @@ class Coach:
         self.net.eval()
         agg_loss_dict = []
         for batch_idx, batch in enumerate(self.test_dataloader):
+            if batch_idx > 100:
+                break
             x, y, fboxes = batch
 
             with torch.no_grad():
@@ -218,8 +220,8 @@ class Coach:
         #                                     source_transform=transforms_dict['transform_source'],
         #                                     target_transform=transforms_dict['transform_test'],
         #                                     opts=self.opts)
-        train_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.0, 0.9))
-        test_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.9, 1.0))
+        train_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.0, 0.95))
+        test_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.95, 1.0))
         print("Number of training samples: {}".format(len(train_dataset)))
         print("Number of test samples: {}".format(len(test_dataset)))
         return train_dataset, test_dataset
