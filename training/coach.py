@@ -241,7 +241,7 @@ class Coach:
                     loss_lpips = self.lpips_loss(fhead_y, fhead_x)
                     lpips_loss += loss_lpips * self.opts.lpips_lambda
                 if self.opts.id_lambda_fh != 0:
-                    loss_id, sim_improvement, id_logs = self.id_loss(fhead_y, fhead_x, fhead_x, face=False)
+                    loss_id, sim_improvement, _ = self.id_loss(fhead_y, fhead_x, fhead_x, face=False)
 
                     # loss_dict['id_improve'] = float(sim_improvement)
                     id_loss += loss_id * self.opts.id_lambda_fh
@@ -298,8 +298,9 @@ class Coach:
                 'output_face': common.tensor2im(y_hat[i]),
             }
             if id_logs is not None:
-                for key in id_logs[i]:
-                    cur_im_data[key] = id_logs[i][key]
+                if i in id_logs:
+                    for key in id_logs[i]:
+                        cur_im_data[key] = id_logs[i][key]
             im_data.append(cur_im_data)
         self.log_images(title, im_data=im_data, subscript=subscript)
 
