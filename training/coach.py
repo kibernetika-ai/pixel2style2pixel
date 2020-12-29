@@ -153,7 +153,7 @@ class Coach:
         self.net.eval()
         agg_loss_dict = []
         for batch_idx, batch in enumerate(self.test_dataloader):
-            if batch_idx > 100:
+            if batch_idx > 200:
                 break
             x, y, fboxes = batch
 

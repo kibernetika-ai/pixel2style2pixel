@@ -93,7 +93,7 @@ class ImdbDataset(Dataset):
         landmark = self.denorm_lmarks(self.landmarks[src_path], from_im)
         fbox = self.forehead_coords(landmark).astype(int)
 
-        if fbox[3] - fbox[1] < 32:
+        if fbox[3] - fbox[1] < 32 or fbox[2] - fbox[0] < 32:
             # print(f'Fbox too small: {fbox}')
             new_idx = np.random.randint(0, len(self))
             return self[new_idx]
