@@ -94,11 +94,18 @@ class ImdbDataset(Dataset):
         # to_im_fhead = self.inject_forehead(from_path, to_path, from_im, to_im)
 
         src_path = '/'.join(from_path.split('/')[-2:])
-        # dest_path = '/'.join(to_path.split('/')[-2:])
+        dest_path = '/'.join(to_path.split('/')[-2:])
         landmark = self.denorm_lmarks(self.landmarks[src_path], from_im)
+        landmark2 = self.denorm_lmarks(self.landmarks[dest_path], from_im)
         fbox = self.forehead_coords(landmark).astype(int)
+        fbox2 = self.forehead_coords(landmark2).astype(int)
 
-        if fbox[3] - fbox[1] < 32 or fbox[2] - fbox[0] < 32:
+        if fbox[3] - fbox[1] < 16 or fbox[2] - fbox[0] < 16:
+            # print(f'Fbox too small: {fbox}')
+            new_idx = np.random.randint(0, len(self))
+            return self[new_idx]
+
+        if fbox2[3] - fbox2[1] < 16 or fbox2[2] - fbox2[0] < 16:
             # print(f'Fbox too small: {fbox}')
             new_idx = np.random.randint(0, len(self))
             return self[new_idx]
@@ -123,4 +130,4 @@ class ImdbDataset(Dataset):
         from_im = torch.tensor(from_im).permute([2, 0, 1])
         to_im = torch.tensor(to_im).permute([2, 0, 1])
 
-        return from_im, to_im, torch.tensor(fbox)
+        return from_im, to_im, torch.tensor(fbox), torch.tensor(fbox2)

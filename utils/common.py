@@ -52,7 +52,7 @@ def get_colors():
 def vis_faces(log_hooks):
 	display_count = len(log_hooks)
 	fig = plt.figure(figsize=(8, 4 * display_count))
-	gs = fig.add_gridspec(display_count, 3)
+	gs = fig.add_gridspec(display_count, 4)
 	for i in range(display_count):
 		hooks_dict = log_hooks[i]
 		fig.add_subplot(gs[i, 0])
@@ -65,23 +65,29 @@ def vis_faces(log_hooks):
 
 
 def vis_faces_with_id(hooks_dict, fig, gs, i):
-	plt.imshow(hooks_dict['input_face'])
-	plt.title('Input\nOut Sim={:.2f}'.format(float(hooks_dict['diff_input'])))
+	plt.imshow(hooks_dict['input_face1'])
+	plt.title('Input1\nOut Sim={:.2f}'.format(float(hooks_dict['diff_input'])))
 	fig.add_subplot(gs[i, 1])
-	plt.imshow(hooks_dict['target_face'])
-	plt.title('Target\nIn={:.2f}, Out={:.2f}'.format(float(hooks_dict['diff_views']),
+	plt.imshow(hooks_dict['output_face1'])
+	plt.title('Output1\nIn={:.2f}, Out={:.2f}'.format(float(hooks_dict['diff_views']),
 	                                                 float(hooks_dict['diff_target'])))
 	fig.add_subplot(gs[i, 2])
-	plt.imshow(hooks_dict['output_face'])
-	plt.title('Output\n Target Sim={:.2f}'.format(float(hooks_dict['diff_target'])))
+	plt.imshow(hooks_dict['input_face2'])
+	plt.title('Input2\n Target Sim={:.2f}'.format(float(hooks_dict['diff_target'])))
+	fig.add_subplot(gs[i, 3])
+	plt.imshow(hooks_dict['output_face2'])
+	plt.title('Output2')
 
 
 def vis_faces_no_id(hooks_dict, fig, gs, i):
-	plt.imshow(hooks_dict['input_face'], cmap="gray")
-	plt.title('Input')
+	plt.imshow(hooks_dict['input_face1'], cmap="gray")
+	plt.title('Input1')
 	fig.add_subplot(gs[i, 1])
-	plt.imshow(hooks_dict['target_face'])
-	plt.title('Target')
+	plt.imshow(hooks_dict['output_face1'])
+	plt.title('Output1')
 	fig.add_subplot(gs[i, 2])
-	plt.imshow(hooks_dict['output_face'])
-	plt.title('Output')
+	plt.imshow(hooks_dict['input_face1'])
+	plt.title('Input2')
+	fig.add_subplot(gs[i, 3])
+	plt.imshow(hooks_dict['output_face2'])
+	plt.title('Output2')

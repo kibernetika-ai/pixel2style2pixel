@@ -25,8 +25,13 @@ class LPIPS(nn.Module):
         # linear layers
         self.lin = LinLayers(self.net.n_channels_list).to("cuda")
         self.lin.load_state_dict(get_state_dict(net_type, version))
+        self.upsample = nn.Upsample(scale_factor=2)
 
     def forward(self, x: torch.Tensor, y: torch.Tensor):
+        if x.shape[0] < 32 or x.shape[1] < 32:
+            x = self.upsample(x)
+            y = self.upsample(y)
+
         feat_x, feat_y = self.net(x), self.net(y)
 
         diff = [(fx - fy) ** 2 for fx, fy in zip(feat_x, feat_y)]
