@@ -1,4 +1,5 @@
 import os
+import sys
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -19,6 +20,11 @@ from datasets.images_dataset import ImagesDataset
 from criteria.lpips.lpips import LPIPS
 from models.psp import pSp
 from training.ranger import Ranger
+
+
+def print_fun(s):
+    print(s)
+    sys.stdout.flush()
 
 
 class Proc(nn.Module):
@@ -145,7 +151,7 @@ class Coach:
                         self.checkpoint_me(loss_dict, is_best=False)
 
                 if self.global_step == self.opts.max_steps:
-                    print('OMG, finished training!')
+                    print_fun('OMG, finished training!')
                     break
 
                 self.global_step += 1
@@ -209,7 +215,7 @@ class Coach:
     def configure_datasets(self):
         # if self.opts.dataset_type not in data_configs.DATASETS.keys():
         # 	Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
-        print('Loading dataset for {}'.format(self.opts.dataset_type))
+        print_fun('Loading dataset for {}'.format(self.opts.dataset_type))
         # dataset_args = data_configs.DATASETS[self.opts.dataset_type]
         # transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
         # train_dataset_celeba = ImagesDataset(source_root=dataset_args['train_source_root'],
@@ -224,8 +230,8 @@ class Coach:
         #                                     opts=self.opts)
         train_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.0, 0.95))
         test_dataset = imdb_dataset.ImdbDataset(self.opts.data_dir, split=(0.95, 1.0))
-        print("Number of training samples: {}".format(len(train_dataset)))
-        print("Number of test samples: {}".format(len(test_dataset)))
+        print_fun("Number of training samples: {}".format(len(train_dataset)))
+        print_fun("Number of test samples: {}".format(len(test_dataset)))
         return train_dataset, test_dataset
 
     def calc_loss_fh(self, x, y_hat, fboxes, loss_dict):
@@ -307,9 +313,9 @@ class Coach:
             self.logger.add_scalar('{}/{}'.format(prefix, key), value, self.global_step)
 
     def print_metrics(self, metrics_dict, prefix):
-        print('Metrics for {}, step {}'.format(prefix, self.global_step))
+        print_fun('Metrics for {}, step {}'.format(prefix, self.global_step))
         for key, value in metrics_dict.items():
-            print('\t{} = '.format(key), value)
+            print_fun(f'\t{key} = {value}')
 
     def parse_and_log_images(self, id_logs, x, x2, y_hat, y_hat2, title, subscript=None, display_count=2):
         im_data = []
