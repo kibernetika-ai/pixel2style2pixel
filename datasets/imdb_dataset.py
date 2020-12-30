@@ -81,9 +81,14 @@ class ImdbDataset(Dataset):
         from_path = self.image_paths[index]
         from_im = cv2.cvtColor(cv2.imread(from_path), cv2.COLOR_BGR2RGB)
 
-        to_path = np.random.choice(self.image_paths)
-        while to_path == from_path:
-            to_path = np.random.choice(self.image_paths)
+        person_id = os.path.basename(from_path).split('_')[0]
+        dirname = os.path.dirname(from_path)
+        person_paths = glob.glob(os.path.join(dirname, person_id + '*'))
+        to_path = np.random.choice(person_paths)
+        i = 0
+        while to_path == from_path and i < 10:
+            to_path = np.random.choice(person_paths)
+            i += 1
 
         to_im = cv2.cvtColor(cv2.imread(to_path), cv2.COLOR_BGR2RGB)
         # to_im_fhead = self.inject_forehead(from_path, to_path, from_im, to_im)
@@ -98,7 +103,7 @@ class ImdbDataset(Dataset):
             new_idx = np.random.randint(0, len(self))
             return self[new_idx]
 
-        forehead = from_im[fbox[1]:fbox[3], fbox[0]:fbox[2]]
+        # forehead = from_im[fbox[1]:fbox[3], fbox[0]:fbox[2]]
         # landmark_dst = self.denorm_lmarks(self.landmarks[dest_path], to_im)
         # for p in landmark_dst:
         #     cv2.circle(
