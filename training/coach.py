@@ -56,7 +56,7 @@ class Coach:
         self.proc_latent = Proc()
 
         # Initialize loss
-        if self.opts.lpips_lambda != 0:
+        if self.opts.lpips_lambda != 0 or self.opts.lpips_lambda_fh != 0:
             self.lpips_loss = LPIPS(net_type='alex').to(self.device).eval()
         if self.opts.id_lambda != 0 or self.opts.id_lambda_fh != 0:
             self.id_loss = id_loss.IDLoss(weights=opts.facenet_path).to(self.device).eval()
