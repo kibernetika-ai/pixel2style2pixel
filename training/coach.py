@@ -275,8 +275,8 @@ class Coach:
             loss += self.calc_loss_fh(x, y_hat, fboxes, loss_dict)
             loss += self.calc_loss_fh(x2, y_hat2, fboxes2, loss_dict)
 
-        loss_id, _, _ = self.id_loss(y_hat2, y_hat, x)
-        loss += loss_id * 1.0
+        # loss_id, _, _ = self.id_loss(y_hat2, y_hat, x)
+        # loss += loss_id * 1.0
 
         if self.opts.id_lambda != 0:
             loss_id, sim_improvement, id_logs = self.id_loss(y_hat, x, x)
@@ -319,6 +319,10 @@ class Coach:
 
     def parse_and_log_images(self, id_logs, x, x2, y_hat, y_hat2, title, subscript=None, display_count=2):
         im_data = []
+
+        loss_id, _, _ = self.id_loss(x2, x, x)
+        print_fun(f'Loss x2-x1 = {float(loss_id):.4f}')
+
         for i in range(min(display_count, len(x))):
             cur_im_data = {
                 'input_face1': common.log_input_image(x[i], self.opts),
