@@ -86,7 +86,7 @@ def vis_faces_no_id(hooks_dict, fig, gs, i):
 	plt.imshow(hooks_dict['output_face1'])
 	plt.title('Output1')
 	fig.add_subplot(gs[i, 2])
-	plt.imshow(hooks_dict['input_face1'])
+	plt.imshow(hooks_dict['input_face2'])
 	plt.title('Input2')
 	fig.add_subplot(gs[i, 3])
 	plt.imshow(hooks_dict['output_face2'])
