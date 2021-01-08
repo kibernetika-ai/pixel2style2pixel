@@ -1,7 +1,9 @@
 """
 This file defines the core research contribution
 """
+from math import log
 import matplotlib
+import logging
 
 matplotlib.use('Agg')
 import torch
@@ -68,8 +70,11 @@ class pSp(nn.Module):
 	def forward(self,codes,patch, resize=True,randomize_noise=True):
 		input_code = True
 		input_is_latent = not input_code
+		logging.info('Codes: {}'.format(codes.shape))
 		if patch is not None:
+			logging.info('Patch: {}'.format(patch.shape))
 			fcodes = self.encoder(patch)
+			logging.info('fcodes: {}'.format(fcodes.shape))
 			codes *= fcodes
 
 		images, _ = self.decoder([codes],input_is_latent=input_is_latent,
