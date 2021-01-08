@@ -100,11 +100,10 @@ class Coach:
         while self.global_step < self.opts.max_steps:
             for batch_idx, batch in enumerate(self.train_dataloader):
                 self.optimizer.zero_grad()
-                code,forehead,forehead_sized,fbox = batch
+                code,forehead,fbox = batch
                 code, forehead = code.to(self.device).float(), forehead.to(self.device).float()
-                forehead_sized = forehead_sized.to(self.device).float()
                 x = self.net.forward(code)
-                y = self.net.forward(code,forehead_sized)
+                y = self.net.forward(code,forehead)
                 loss, loss_dict, id_logs = self.calc_loss(x,x,y)
                 loss.backward()
 
@@ -144,13 +143,12 @@ class Coach:
         for batch_idx, batch in enumerate(self.test_dataloader):
             if batch_idx > 200:
                 break
-            code,forehead,forehead_sized,fbox = batch
+            code,forehead,fbox = batch
 
             with torch.no_grad():
-                code, forehead,forehead_sized = code.to(self.device).float(), forehead.to(self.device).float()
-                forehead_sized = forehead_sized.to(self.device).float()
+                code, forehead = code.to(self.device).float(), forehead.to(self.device).float()
                 x = self.net.forward(code)
-                y = self.net.forward(code,forehead_sized)
+                y = self.net.forward(code,forehead)
                 loss, cur_loss_dict, id_logs = self.calc_loss(x,x,y)
 
             agg_loss_dict.append(cur_loss_dict)
