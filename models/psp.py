@@ -65,7 +65,23 @@ class pSp(nn.Module):
 			else:
 				self.__load_latent_avg(ckpt, repeat=18)
 
-	def forward(self, x, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
+	def forward(self,codes,patch, resize=True,randomize_noise=True):
+		input_code = True
+		input_is_latent = not input_code
+		if patch is not None:
+			fcodes = self.encoder(patch)
+			codes *= fcodes
+
+		images, _ = self.decoder([codes],input_is_latent=input_is_latent,
+		                                     randomize_noise=randomize_noise,
+		                                     return_latents=False)
+
+		if resize:
+			images = self.face_pool(images)
+
+		return images
+
+	def forward0(self, x, resize=True, latent_mask=None, input_code=False, randomize_noise=True,
 	            inject_latent=None, return_latents=False, alpha=None):
 		if input_code:
 			codes = x

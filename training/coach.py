@@ -100,38 +100,20 @@ class Coach:
         while self.global_step < self.opts.max_steps:
             for batch_idx, batch in enumerate(self.train_dataloader):
                 self.optimizer.zero_grad()
-                x, x2, fboxes, fboxes2 = batch
-                x, x2 = x.to(self.device).float(), x2.to(self.device).float()
-
-                y_hat, latent = self.net.forward(x, return_latents=True)
-                y_hat2, latent = self.net.forward(x2, return_latents=True)
-
-                # vec_to_inject = np.random.randn(1, 512).astype('float32')
-                # _, latent_to_inject = self.net.forward(
-                #     torch.from_numpy(vec_to_inject).to(self.device),
-                #     input_code=True,
-                #     return_latents=True
-                # )
-
-                # latent_to_inject = self.proc_latent(latent_to_inject)
-
-                # y_hat, latent = self.net.forward(
-                #     x,
-                #     latent_mask=np.random.choice(np.arange(18), size=1),
-                #     inject_latent=latent_to_inject,
-                #     return_latents=True
-                #     alpha=opts.mix_alpha,
-                #     resize=opts.resize_outputs
-                # )
-
-                loss, loss_dict, id_logs = self.calc_loss(x, x2, y_hat, y_hat2, latent, fboxes, fboxes2)
+                code,forehead,forehead_sized,fbox = batch
+                code, forehead = code.to(self.device).float(), forehead.to(self.device).float()
+                forehead_sized = forehead_sized.to(self.device).float()
+                x = self.net.forward(code)
+                y = self.net.forward(code,forehead_sized)
+                loss, loss_dict, id_logs = self.calc_loss(x,x,y)
                 loss.backward()
+
                 self.optimizer.step()
 
                 # Logging related
                 if self.global_step % self.opts.image_interval == 0 or (
                         self.global_step < 1000 and self.global_step % 25 == 0):
-                    self.parse_and_log_images(id_logs, x, x2, y_hat, y_hat2, title='images/train/faces')
+                    self.parse_and_log_images(id_logs, x, x, y, title='images/train/faces')
                 if self.global_step % self.opts.board_interval == 0:
                     self.print_metrics(loss_dict, prefix='train')
                     self.log_metrics(loss_dict, prefix='train')
@@ -162,18 +144,20 @@ class Coach:
         for batch_idx, batch in enumerate(self.test_dataloader):
             if batch_idx > 200:
                 break
-            x, x2, fboxes, fboxes2 = batch
+            code,forehead,forehead_sized,fbox = batch
 
             with torch.no_grad():
-                x, x2 = x.to(self.device).float(), x2.to(self.device).float()
-                y_hat, latent = self.net.forward(x, return_latents=True)
-                y_hat2, latent = self.net.forward(x2, return_latents=True)
-                loss, cur_loss_dict, id_logs = self.calc_loss(x, x2, y_hat, y_hat2, latent, fboxes, fboxes2)
+                code, forehead,forehead_sized = code.to(self.device).float(), forehead.to(self.device).float()
+                forehead_sized = forehead_sized.to(self.device).float()
+                x = self.net.forward(code)
+                y = self.net.forward(code,forehead_sized)
+                loss, cur_loss_dict, id_logs = self.calc_loss(x,x,y)
+
             agg_loss_dict.append(cur_loss_dict)
 
             # Logging related
             self.parse_and_log_images(
-                id_logs, x, x2, y_hat, y_hat2,
+                id_logs, x, x, y,
                 title='images/test/faces',
                 subscript='{:04d}'.format(batch_idx)
             )
@@ -234,80 +218,31 @@ class Coach:
         print_fun("Number of test samples: {}".format(len(test_dataset)))
         return train_dataset, test_dataset
 
-    def calc_loss_fh(self, x, y_hat, fboxes, loss_dict):
-        f_loss = 0
-        lpips_loss = 0
-        id_loss = 0
-        total = 0
-        for i, fbox in enumerate(fboxes):
-            fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
-            fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
-            if self.opts.lpips_lambda_fh > 0:
-                loss_lpips = self.lpips_loss(fhead_y, fhead_x)
-                lpips_loss += loss_lpips * self.opts.lpips_lambda_fh
-            if self.opts.id_lambda_fh != 0:
-                loss_id, sim_improvement, _ = self.id_loss(fhead_y, fhead_x, fhead_x, face=False)
-
-                # loss_dict['id_improve'] = float(sim_improvement)
-                id_loss += loss_id * self.opts.id_lambda_fh
-            f_loss += F.mse_loss(fhead_y, fhead_x)
-        if 'loss_lpips' in loss_dict:
-            loss_dict['loss_lpips'] += float(lpips_loss)
-        else:
-            loss_dict['loss_lpips'] = float(lpips_loss)
-
-        if 'loss_id_fh' in loss_dict:
-            loss_dict['loss_id_fh'] += float(id_loss)
-        else:
-            loss_dict['loss_id_fh'] = float(id_loss)
-        total += f_loss
-        total += lpips_loss
-        total += id_loss
-        return total
-
-    def calc_loss(self, x, x2, y_hat, y_hat2, latent, fboxes, fboxes2):
+    def calc_loss(self, x, y, y_hat):
         loss_dict = {}
         loss = 0.0
         id_logs = None
-        forehead_lambda = 1.0
-
-        if forehead_lambda > 0:
-            loss += self.calc_loss_fh(x, y_hat, fboxes, loss_dict)
-            loss += self.calc_loss_fh(x2, y_hat2, fboxes2, loss_dict)
-
-        # loss_id, _, _ = self.id_loss(y_hat2, y_hat, x)
-        # loss += loss_id * 1.0
-
-        if self.opts.id_lambda != 0:
-            loss_id, sim_improvement, id_logs = self.id_loss(y_hat, x, x)
-            loss_dict['loss_id'] = float(loss_id)
-            loss_dict['id_improve'] = float(sim_improvement)
-            loss += loss_id * self.opts.id_lambda
-            loss_id, sim_improvement, id_logs = self.id_loss(y_hat2, x2, x)
-            loss += loss_id * self.opts.id_lambda
+        if self.opts.id_lambda > 0:
+    	    loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y, x)
+    	    loss_dict['loss_id'] = float(loss_id)
+    	    loss_dict['id_improve'] = float(sim_improvement)
+    	    loss = loss_id * self.opts.id_lambda
         if self.opts.l2_lambda > 0:
-            loss_l2 = F.mse_loss(y_hat, x2)
-            loss_dict['loss_l2'] = float(loss_l2)
-            loss += loss_l2 * self.opts.l2_lambda
-        if self.opts.lpips_lambda != 0:
-            loss_lpips = self.lpips_loss(y_hat, x)
-            loss_dict['loss_lpips'] = float(loss_lpips)
-            loss += loss_lpips * self.opts.lpips_lambda
-
-            loss_lpips = self.lpips_loss(y_hat2, x2)
-            loss += loss_lpips * self.opts.lpips_lambda
-        # if self.opts.lpips_lambda_crop > 0:
-        # 	loss_lpips_crop = self.lpips_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
-        # 	loss_dict['loss_lpips_crop'] = float(loss_lpips_crop)
-        # 	loss += loss_lpips_crop * self.opts.lpips_lambda_crop
-        # if self.opts.l2_lambda_crop > 0:
-        # 	loss_l2_crop = F.mse_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
-        # 	loss_dict['loss_l2_crop'] = float(loss_l2_crop)
-        # 	loss += loss_l2_crop * self.opts.l2_lambda_crop
-        if self.opts.w_norm_lambda > 0:
-            loss_w_norm = self.w_norm_loss(latent, self.net.latent_avg)
-            loss_dict['loss_w_norm'] = float(loss_w_norm)
-            loss += loss_w_norm * self.opts.w_norm_lambda
+    	    loss_l2 = F.mse_loss(y_hat, y)
+    	    loss_dict['loss_l2'] = float(loss_l2)
+    	    loss += loss_l2 * self.opts.l2_lambda
+        if self.opts.lpips_lambda > 0:
+    	    loss_lpips = self.lpips_loss(y_hat, y)
+    	    loss_dict['loss_lpips'] = float(loss_lpips)
+    	    loss += loss_lpips * self.opts.lpips_lambda
+        if self.opts.lpips_lambda_crop > 0:
+    	    loss_lpips_crop = self.lpips_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
+    	    loss_dict['loss_lpips_crop'] = float(loss_lpips_crop)
+    	    loss += loss_lpips_crop * self.opts.lpips_lambda_crop
+        if self.opts.l2_lambda_crop > 0:
+    	    loss_l2_crop = F.mse_loss(y_hat[:, :, 35:223, 32:220], y[:, :, 35:223, 32:220])
+    	    loss_dict['loss_l2_crop'] = float(loss_l2_crop)
+    	    loss += loss_l2_crop * self.opts.l2_lambda_crop
         loss_dict['loss'] = float(loss)
         return loss, loss_dict, id_logs
 
@@ -320,23 +255,17 @@ class Coach:
         for key, value in metrics_dict.items():
             print_fun(f'\t{key} = {value}')
 
-    def parse_and_log_images(self, id_logs, x, x2, y_hat, y_hat2, title, subscript=None, display_count=2):
+    def parse_and_log_images(self, id_logs, x, y, y_hat, title, subscript=None, display_count=2):
         im_data = []
-
-        loss_id, _, _ = self.id_loss(x2, x, x)
-        print_fun(f'Loss x2-x1 = {float(loss_id):.4f}')
-
-        for i in range(min(display_count, len(x))):
+        for i in range(display_count):
             cur_im_data = {
-                'input_face1': common.log_input_image(x[i], self.opts),
-                'output_face1': common.tensor2im(y_hat[i]),
-                'input_face2': common.tensor2im(x2[i]),
-                'output_face2': common.tensor2im(y_hat2[i]),
-            }
+                'input_face': common.log_input_image(x[i], self.opts),
+                'target_face': common.tensor2im(y[i]),
+                'output_face': common.tensor2im(y_hat[i]),
+                }
             if id_logs is not None:
-                if i in id_logs:
-                    for key in id_logs[i]:
-                        cur_im_data[key] = id_logs[i][key]
+                for key in id_logs[i]:
+                    cur_im_data[key] = id_logs[i][key]
             im_data.append(cur_im_data)
         self.log_images(title, im_data=im_data, subscript=subscript)
 
