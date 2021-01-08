@@ -70,12 +70,13 @@ class pSp(nn.Module):
 	def forward(self,codes,patch, resize=True,randomize_noise=True):
 		input_code = True
 		input_is_latent = not input_code
-		print('Codes: {}'.format(codes.shape))
+		#print('Codes: {}'.format(codes.shape))
 		if patch is not None:
-			print('Patch: {}'.format(patch.shape))
-			fcodes = self.encoder(patch)
-			print('fcodes: {}'.format(fcodes.shape))
-			codes *= fcodes
+			#print('Patch: {}'.format(patch.shape))
+			#fcodes = self.encoder(patch)
+			#print('fcodes: {}'.format(fcodes.shape))
+			#codes *= fcodes
+			pass
 
 		images, _ = self.decoder([codes],input_is_latent=input_is_latent,
 		                                     randomize_noise=randomize_noise,

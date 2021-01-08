@@ -67,5 +67,5 @@ class ImdbDataset(Dataset):
         forehead = from_im[fbox[1]:fbox[3],fbox[0]:fbox[2],:]
         forehead_sized = self.transform(forehead, self.size)
         forehead_sized = torch.tensor(forehead_sized).permute([2, 0, 1])
-        code = np.random.randn(512).astype('float32')
+        code = np.random.randn(18,512).astype('float32')
         return torch.from_numpy(code),forehead_sized,torch.from_numpy(fbox)
