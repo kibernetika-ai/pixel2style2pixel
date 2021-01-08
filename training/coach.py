@@ -102,7 +102,7 @@ class Coach:
                 self.optimizer.zero_grad()
                 code,forehead,fbox = batch
                 code, forehead = code.to(self.device).float(), forehead.to(self.device).float()
-                x = self.net.forward(code)
+                x = self.net.forward(code,None)
                 y = self.net.forward(code,forehead)
                 loss, loss_dict, id_logs = self.calc_loss(x,x,y)
                 loss.backward()
@@ -147,7 +147,7 @@ class Coach:
 
             with torch.no_grad():
                 code, forehead = code.to(self.device).float(), forehead.to(self.device).float()
-                x = self.net.forward(code)
+                x = self.net.forward(code,None)
                 y = self.net.forward(code,forehead)
                 loss, cur_loss_dict, id_logs = self.calc_loss(x,x,y)
 
