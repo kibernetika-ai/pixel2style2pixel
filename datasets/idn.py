@@ -36,6 +36,7 @@ class ImdbDataset(Dataset):
 
     def denorm_lmarks(self, landmarks, img):
         landmarks = landmarks.copy()
+        landmarks = np.clip(landmarks,0,1)
         landmarks[:, 0] = landmarks[:, 0] * img.shape[1]
         landmarks[:, 1] = landmarks[:, 1] * img.shape[0]
         return landmarks
