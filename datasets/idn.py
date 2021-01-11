@@ -12,6 +12,7 @@ from datasets import augmentations
 
 class ImdbDataset(Dataset):
     def __init__(self, source_root, split=(0.0, 0.9)):
+        self.orig_src = '/notebooks/imdb'
         image_paths = sorted(glob.glob(os.path.join(source_root, '**/*.jpg')))
         self.image_paths = image_paths[int(len(image_paths) * split[0]):int(len(image_paths) * split[1])]
         with open(os.path.join(source_root, 'landmarks.pkl'), 'rb') as f:
@@ -36,17 +37,19 @@ class ImdbDataset(Dataset):
 
     def denorm_lmarks(self, landmarks, img):
         landmarks = landmarks.copy()
-        landmarks = np.clip(landmarks,0,1)
         landmarks[:, 0] = landmarks[:, 0] * img.shape[1]
         landmarks[:, 1] = landmarks[:, 1] * img.shape[0]
+        landmarks = np.clip(landmarks,0,256)
         return landmarks
 
     def __getitem__(self, index):
         from_path = self.image_paths[index]
         from_im = cv2.cvtColor(cv2.imread(from_path), cv2.COLOR_BGR2RGB)
         src_path = '/'.join(from_path.split('/')[-2:])
-        landmark = self.denorm_lmarks(self.landmarks[src_path], from_im)
-        msk = landmark[1:16,:2].copy()
+        orig_img = os.path.join(self.orig_src,src_path)
+        orig_img = cv2.imread(orig_img)
+        landmark = self.denorm_lmarks(self.landmarks[src_path], orig_img)
+        msk = landmark[0:17,:2].copy()
         msk = msk.astype(np.int32)
         msk = np.array([msk],np.int32)
         masked = cv2.fillPoly(from_im,msk,(0,0,0))
