@@ -52,9 +52,9 @@ class ImdbDataset(Dataset):
         msk = landmark[0:17,:2].copy()
         msk = msk.astype(np.int32)
         msk = np.array([msk],np.int32)
-        masked = cv2.fillPoly(from_im,msk,(0,0,0))
+        masked = cv2.fillPoly(from_im.copy(),msk,(0,0,0))
         from_im = self.transform(from_im, self.size)
         masked = self.transform(masked, self.size)
-        from_im = torch.tensor(from_im).permute([2, 0, 1])
-        masked = torch.tensor(masked).permute([2, 0, 1])
+        from_im = torch.from_numpy(from_im).permute([2, 0, 1])
+        masked = torch.from_numpy(masked).permute([2, 0, 1])
         return masked, from_im
