@@ -148,8 +148,8 @@ def main():
         l3d = l3d[0]
 
         landmark_3d = l3d[:, :].astype(np.float32)
-        landmark_3d[:, 0] = (landmark_3d[:, 0]) / frame.shape[1]
-        landmark_3d[:, 1] = (landmark_3d[:, 1]) / frame.shape[0]
+        landmark_3d[:, 0] = (landmark_3d[:, 0]) / aligned.shape[1]
+        landmark_3d[:, 1] = (landmark_3d[:, 1]) / aligned.shape[0]
         landmark_3d[:, 2] = landmark_3d[:, 2] / (200 * scale)
         landmark_3d[:, 0:2] = np.clip(landmark_3d[:, 0:2], 0, 1)
         _, land_transform = norm3d_t(landmark_3d.copy(), landmark_ref)
