@@ -48,6 +48,7 @@ class ImdbDataset(Dataset):
         landmark = self.denorm_lmarks(self.landmarks[src_path], from_im)
         msk = landmark[1:16,:2].copy()
         msk = msk.astype(np.int32)
+        msk = np.array([msk],np.int32)
         masked = cv2.fillPoly(from_im,msk,(0,0,0))
         from_im = self.transform(from_im, self.size)
         masked = self.transform(masked, self.size)
