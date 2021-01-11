@@ -5,7 +5,6 @@ date: 2020.1.5
 note: code is heavily borrowed from 
 	https://github.com/NVlabs/ffhq-dataset
 	http://dlib.net/face_landmark_detection.py.html
-
 requirements:
 	apt install cmake
 	conda install Pillow numpy scipy
@@ -25,8 +24,8 @@ import dlib
 import multiprocessing as mp
 import math
 
-from configs.paths_config import get_model_path
-SHAPE_PREDICTOR_PATH = get_model_path("shape_predictor")
+from configs.paths_config import model_paths
+SHAPE_PREDICTOR_PATH = model_paths["shape_predictor"]
 
 
 def get_landmark(filepath, predictor):
@@ -49,13 +48,16 @@ def get_landmark(filepath, predictor):
 	return lm
 
 
-def align_face(filepath, predictor):
+def align_face(filepath, predictor, img=None, landmarks=None):
 	"""
 	:param filepath: str
 	:return: PIL Image
 	"""
 
-	lm = get_landmark(filepath, predictor)
+	if landmarks is not None:
+		lm = landmarks
+	else:
+		lm = get_landmark(filepath, predictor)
 
 	lm_chin = lm[0: 17]  # left-right
 	lm_eyebrow_left = lm[17: 22]  # left-right
@@ -87,7 +89,10 @@ def align_face(filepath, predictor):
 	qsize = np.hypot(*x) * 2
 
 	# read image
-	img = PIL.Image.open(filepath)
+	if img is None:
+		img = PIL.Image.open(filepath)
+	else:
+		img = PIL.Image.fromarray(img)
 
 	output_size = 256
 	transform_size = 256
