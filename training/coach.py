@@ -163,8 +163,8 @@ class Coach:
 		if self.opts.dataset_type not in data_configs.DATASETS.keys():
 			Exception('{} is not a valid dataset_type'.format(self.opts.dataset_type))
 		print('Loading dataset for {}'.format(self.opts.dataset_type))
-		dataset_args = data_configs.DATASETS[self.opts.dataset_type]
-		transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
+		#dataset_args = data_configs.DATASETS[self.opts.dataset_type]
+		#transforms_dict = dataset_args['transforms'](self.opts).get_transforms()
 
 		train_dataset = ImdbDataset(self.opts.data_dir, split=(0.0, 0.95))
 		test_dataset = ImdbDataset(self.opts.data_dir, split=(0.95, 1.0))
