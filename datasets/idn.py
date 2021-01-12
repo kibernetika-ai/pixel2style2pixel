@@ -12,7 +12,7 @@ from datasets import augmentations
 
 class ImdbDataset(Dataset):
     def __init__(self, source_root, split=(0.0, 0.9)):
-        self.orig_src = '/notebooks/imdb'
+        #self.orig_src = '/notebooks/imdb'
         image_paths = sorted(glob.glob(os.path.join(source_root, '**/*.jpg')))
         self.image_paths = image_paths[int(len(image_paths) * split[0]):int(len(image_paths) * split[1])]
         with open(os.path.join(source_root, 'landmarks.pkl'), 'rb') as f:
