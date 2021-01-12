@@ -38,7 +38,7 @@ def main():
     min_face_size = args.min_size
     min_box_diagonal = int(math.sqrt(2 * (min_face_size ** 2)))
     print_fun('List files...')
-    image_paths = glob.glob(os.path.join(args.data_dir, '**/*.png'))
+    image_paths = glob.glob(os.path.join(args.data_dir, '*.png'))
     print_fun(f'Done list files: {len(image_paths)}')
     with open(args.id_file) as f:
         ids = json.loads(f.read())
@@ -122,8 +122,8 @@ def main():
         person_id = reversed_ids[basename]
 
         save_path = os.path.join(args.output_dir, person_id, basename)
-        if not os.path.exists(os.path.join(args.output_dir, dirname)):
-            os.makedirs(os.path.join(args.output_dir, dirname))
+        if not os.path.exists(os.path.join(args.output_dir, person_id)):
+            os.makedirs(os.path.join(args.output_dir, person_id))
 
         cv2.imwrite(save_path, aligned[:, :, ::-1])
         # with open(save_path, 'wb') as f:
