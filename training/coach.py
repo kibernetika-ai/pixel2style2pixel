@@ -1,6 +1,7 @@
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import cv2
 
 matplotlib.use('Agg')
 
@@ -74,10 +75,10 @@ class Coach:
 		while self.global_step < self.opts.max_steps:
 			for batch_idx, batch in enumerate(self.train_dataloader):
 				self.optimizer.zero_grad()
-				x, y = batch
+				x, y, fcbox = batch
 				x, y = x.to(self.device).float(), y.to(self.device).float()
 				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+				loss, loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent,fcbox)
 				loss.backward()
 				self.optimizer.step()
 
@@ -114,12 +115,12 @@ class Coach:
 		self.net.eval()
 		agg_loss_dict = []
 		for batch_idx, batch in enumerate(self.test_dataloader):
-			x, y = batch
+			x, y, fcbox = batch
 
 			with torch.no_grad():
 				x, y = x.to(self.device).float(), y.to(self.device).float()
 				y_hat, latent = self.net.forward(x, return_latents=True)
-				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent)
+				loss, cur_loss_dict, id_logs = self.calc_loss(x, y, y_hat, latent, fcbox)
 			agg_loss_dict.append(cur_loss_dict)
 
 			# Logging related
@@ -176,10 +177,15 @@ class Coach:
 		print("Number of test samples: {}".format(len(test_dataset)))
 		return train_dataset, test_dataset
 
-	def calc_loss(self, x, y, y_hat, latent):
+	def calc_loss(self, x, y, y_hat, latent,fboxes):
 		loss_dict = {}
 		loss = 0.0
 		id_logs = None
+		for i, fbox in enumerate(fboxes):
+			fhead_x = x[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
+			fhead_y = y_hat[i][:, fbox[1]:fbox[3], fbox[0]:fbox[2]].unsqueeze(0)
+			loss += F.mse_loss(fhead_y, fhead_x)
+
 		if self.opts.id_lambda > 0:
 			loss_id, sim_improvement, id_logs = self.id_loss(y_hat, y, x)
 			loss_dict['loss_id'] = float(loss_id)
@@ -217,12 +223,17 @@ class Coach:
 		for key, value in metrics_dict.items():
 			print('\t{} = '.format(key), value)
 
-	def parse_and_log_images(self, id_logs, x, y, y_hat, title, subscript=None, display_count=2):
+	def parse_and_log_images(self, id_logs, x, y, y_hat,ffbox, title, subscript=None, display_count=2):
 		im_data = []
 		for i in range(display_count):
+			def _draw_ff(v):
+				fbox = ffbox[i]
+				v = cv2.rectangle(v,(int(fbox[0]),int(fbox[1])),(int(fbox[2]),int(fbox[3])),(0,255,0),1)
+				return v
+			
 			cur_im_data = {
 				'input_face': common.log_input_image(x[i], self.opts),
-				'target_face': common.tensor2im(y[i]),
+				'target_face': common.tensor2im(y[i],draw_fn=_draw_ff),
 				'output_face': common.tensor2im(y_hat[i]),
 			}
 			if id_logs is not None:
