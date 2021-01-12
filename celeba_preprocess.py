@@ -46,7 +46,7 @@ def main():
     reversed_ids = {}
     for person_id in ids:
         for file in ids[person_id]:
-            reversed_ids[file[:-4] + 'png'] = person_id
+            reversed_ids[file[:-4] + '.png'] = person_id
 
     print_fun('Load face detect driver...')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
