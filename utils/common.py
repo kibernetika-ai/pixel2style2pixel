@@ -20,9 +20,9 @@ def tensor2im(var,draw_fn=None):
 	var[var < 0] = 0
 	var[var > 1] = 1
 	var = var * 255
-	var = var.astype('uint8')
+	var = var.astype(np.uint8)
 	if draw_fn is not None:
-		var = draw_fn(var)
+		var = draw_fn(var.copy())
 	return Image.fromarray(var)
 
 
