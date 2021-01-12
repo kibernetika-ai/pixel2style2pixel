@@ -64,5 +64,5 @@ class ImdbDataset(Dataset):
         masked = self.transform(masked, self.size)
         from_im = torch.from_numpy(from_im).permute([2, 0, 1])
         masked = torch.from_numpy(masked).permute([2, 0, 1])
-        fc = self.forehead_coords(landmark).astype(np.uint32)
+        fc = self.forehead_coords(landmark).astype(np.int32)
         return masked, from_im, torch.from_numpy(fc)
