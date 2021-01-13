@@ -129,8 +129,8 @@ def main():
         # with open(save_path, 'wb') as f:
         #     f.write(raw_img)
 
-        landmarks[f'{dirname}/{basename}'] = landmark_3d
-        boxes[f'{dirname}/{basename}'] = np.array([x1, y1, x2, y2])
+        landmarks[f'{person_id}/{basename}'] = landmark_3d
+        boxes[f'{person_id}/{basename}'] = np.array([x1, y1, x2, y2])
         processed += 1
 
         if args.limit != 0 and processed >= args.limit:
